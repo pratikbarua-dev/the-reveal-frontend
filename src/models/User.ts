@@ -1,0 +1,86 @@
+// ============================================
+// Mongoose Model: User / Profile
+// ============================================
+
+import mongoose, { Schema, type Document } from 'mongoose';
+import type { IUser } from '@/types';
+
+export interface UserDocument extends Omit<IUser, '_id'>, Document {}
+
+const UserSchema = new Schema<UserDocument>(
+  {
+    // Google Auth metadata
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    name: {
+      type: String,
+      trim: true,
+    },
+    image: {
+      type: String,
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
+    // Onboarding preferences
+    isOnboarded: {
+      type: Boolean,
+      default: false,
+    },
+    preferredPartySize: {
+      type: Number,
+      enum: [2, 3, 4],
+      default: 2,
+    },
+    hardLimits: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    // Session participants
+    participantNames: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+
+    // Favorites
+    savedFavorites: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Position',
+      },
+    ],
+
+    // Revealed History
+    history: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: 'Position',
+      },
+    ],
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Indexes
+UserSchema.index({ email: 1 });
+UserSchema.index({ googleId: 1 });
+
+const User =
+  mongoose.models.User || mongoose.model<UserDocument>('User', UserSchema);
+
+export default User;
