@@ -81,10 +81,10 @@ export default function LibraryPage() {
             </Link>
           ) : (
             <Button variant="ghost" size="md" onClick={() => {
-              setSearchQuery('');
-              setSpiceFilter(0);
-              setTagsFilter([]);
-              setPartySizeFilter(2);
+              setSearch('');
+              setSelectedSpice([]);
+              setSelectedTags([]);
+              setSelectedSizes([]);
             }}>
               Reset Filters
             </Button>

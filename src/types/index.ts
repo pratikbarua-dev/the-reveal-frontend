@@ -15,6 +15,7 @@ export interface IUser {
   image?: string;
   googleId: string;
   isOnboarded: boolean;
+  playMode?: 'solo' | 'partner';
   preferredPartySize: 2 | 3 | 4;
   hardLimits: string[];
   participantNames: string[];

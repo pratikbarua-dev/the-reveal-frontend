@@ -3,7 +3,7 @@
 import Input from '../ui/Input';
 
 interface NamesStepProps {
-  partySize: 2 | 3 | 4;
+  partySize: 1 | 2 | 3 | 4;
   value: string[];
   onChange: (value: string[]) => void;
   defaultUserName: string;

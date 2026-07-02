@@ -103,7 +103,7 @@ export default function OnboardingPage() {
             >
               {step === 1 && (
                 <NamesStep
-                  partySize={1 as any}
+                  partySize={1}
                   value={participantNames}
                   onChange={setParticipantNames}
                   defaultUserName={defaultUserName}
