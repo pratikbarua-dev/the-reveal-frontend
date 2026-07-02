@@ -20,6 +20,7 @@ export interface IUser {
   participantNames: string[];
   savedFavorites: Types.ObjectId[];
   history: Types.ObjectId[];
+  isAdmin?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

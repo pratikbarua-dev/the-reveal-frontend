@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useState, MouseEvent, TouchEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import {
   drawScratchSurface,
   scratchLine,
@@ -72,11 +73,13 @@ export default function ScratchCard({
       const canvas = canvasRef.current;
       if (canvas) {
         canvas.style.opacity = '0';
+        canvas.style.pointerEvents = 'none';
       }
     } else {
       initCanvas();
       if (canvasRef.current) {
         canvasRef.current.style.opacity = '1';
+        canvasRef.current.style.pointerEvents = 'auto';
       }
     }
   }, [isRevealed]);
@@ -96,7 +99,7 @@ export default function ScratchCard({
       if (points.length < 2) return;
 
       for (let i = 1; i < points.length; i++) {
-        scratchLine(ctx, points[i - 1].x, points[i - 1].y, points[i].x, points[i].y, data.brushRadius);
+        scratchLine(ctx, points[i - 1].x, points[i - 1].y, points[i].x, points[i].y, data.brushRadius, 0.4);
       }
 
       // Re-calculate transparency locally
@@ -201,18 +204,19 @@ export default function ScratchCard({
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-lg mx-auto bg-surface-light border border-primary/25 rounded-[var(--radius-card)] shadow-glow-intense overflow-hidden select-none touch-none min-h-[400px]"
+      className="relative w-full max-w-lg mx-auto bg-surface-light border border-primary/25 rounded-[var(--radius-card)] shadow-glow-intense overflow-hidden select-none min-h-[400px]"
     >
       {/* Revealed Content Layer */}
       <div className="relative p-6 flex flex-col gap-6 items-center z-0 bg-surface-light w-full">
         {/* Top Side: Position sketch print card */}
         <div className="w-full flex items-center justify-center bg-contrast rounded-[var(--radius-card)] border border-primary/10 overflow-hidden relative shadow-inner p-4 select-none min-h-[250px]">
           {imageUrl && !imgError ? (
-            <img
+            <Image
               src={imageUrl}
               alt={title}
+              fill
               onError={() => setImgError(true)}
-              className="w-full max-h-[300px] object-contain mix-blend-multiply transition-opacity duration-300 pointer-events-none"
+              className="object-contain mix-blend-multiply transition-opacity duration-300 pointer-events-none p-4"
             />
           ) : (
             <div className="text-muted text-[10px] uppercase font-bold tracking-wider text-center select-none">

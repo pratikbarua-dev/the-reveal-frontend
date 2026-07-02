@@ -11,7 +11,12 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { preferredPartySize, hardLimits, participantNames } = body;
+    const { playMode, preferredPartySize, hardLimits, participantNames } = body;
+
+    // Validate playMode
+    if (playMode && !['solo', 'partner'].includes(playMode)) {
+      return NextResponse.json({ error: 'Invalid play mode' }, { status: 400 });
+    }
 
     // Validate preferredPartySize
     if (![2, 3, 4].includes(preferredPartySize)) {
@@ -23,6 +28,7 @@ export async function POST(req: Request) {
     const updatedUser = await User.findOneAndUpdate(
       { email: session.user.email },
       {
+        playMode: playMode || 'solo',
         preferredPartySize,
         hardLimits: hardLimits || [],
         participantNames: participantNames || [],

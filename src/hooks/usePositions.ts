@@ -67,7 +67,14 @@ export function usePositions(filters: UsePositionsFilters) {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [
+    filters.search,
+    filters.favorites,
+    // Use JSON.stringify for arrays to ensure deep equality comparison in the dependency array
+    JSON.stringify(filters.spiceLevels),
+    JSON.stringify(filters.partySizes),
+    JSON.stringify(filters.tags),
+  ]);
 
   // Refetch from page 1 when filters change
   useEffect(() => {

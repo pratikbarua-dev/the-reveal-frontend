@@ -6,6 +6,7 @@ import { LogOut, User, Sparkles, ShieldCheck } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Card from '@/components/ui/Card';
+import Image from 'next/image';
 import Toggle from '@/components/ui/Toggle';
 import { TAG_CATEGORIES } from '@/types';
 
@@ -116,7 +117,7 @@ export default function SettingsPage() {
               <img
                 src={session.user.image}
                 alt={session.user.name || 'User Profile'}
-                className="w-12 h-12 rounded-full border border-secondary/30 shadow-glow-gold"
+                className="w-12 h-12 rounded-full border border-secondary/30 shadow-glow-gold object-cover"
               />
             ) : (
               <div className="w-12 h-12 rounded-full bg-surface-elevated flex items-center justify-center text-muted border border-primary/20">

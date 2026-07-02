@@ -28,11 +28,13 @@ export default function NamesStep({
   return (
     <div className="flex flex-col gap-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold tracking-tight text-gradient-rose">
-          PARTICIPANT NAMES
+        <h2 className="text-2xl font-bold tracking-tight text-gradient-rose uppercase">
+          {partySize === 1 ? 'Your Name' : 'Participant Names'}
         </h2>
         <p className="text-muted text-sm mt-2 font-sans font-light">
-          Provide participant names for role assignments in card templates.
+          {partySize === 1
+            ? 'What should we call you during your sessions?'
+            : 'Provide participant names for role assignments in card templates.'}
         </p>
       </div>
 
@@ -43,9 +45,11 @@ export default function NamesStep({
           return (
             <Input
               key={index}
-              label={`Player ${index + 1}`}
+              label={partySize === 1 ? 'Display Name' : `Player ${index + 1}`}
               placeholder={
-                index === 0
+                partySize === 1
+                  ? 'Your name'
+                  : index === 0
                   ? 'Your name'
                   : index === 1
                   ? "Partner's name"

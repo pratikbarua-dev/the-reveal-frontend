@@ -6,6 +6,7 @@ import Card from '../ui/Card';
 import SpiceBadge from './SpiceBadge';
 import TagPill from './TagPill';
 import { Heart } from 'lucide-react';
+import Image from 'next/image';
 
 interface PositionCardProps {
   position: IPositionCard;
@@ -53,11 +54,12 @@ export default function PositionCard({
 
       {/* Position Cover image illustration header */}
       <div className="relative aspect-[16/10] bg-surface-elevated/20 overflow-hidden border-b border-primary/10">
-        <img
+        <Image
           src={imageSrc}
           alt={position.title}
+          fill
           onError={() => setImgError(true)}
-          className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+          className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
         />
       </div>
 

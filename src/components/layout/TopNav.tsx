@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Timer, UserCircle } from 'lucide-react';
+import Image from 'next/image';
 
 export default function TopNav() {
   const { data: session } = useSession();
@@ -24,7 +25,7 @@ export default function TopNav() {
               src={session.user.image}
               alt={session.user.name || 'User Profile'}
               onError={() => setAvatarError(true)}
-              className="w-8 h-8 rounded-full border border-secondary/30 shadow-[0_0_8px_rgba(212,175,55,0.2)]"
+              className="w-8 h-8 rounded-full border border-secondary/30 shadow-[0_0_8px_rgba(212,175,55,0.2)] object-cover"
             />
           ) : (
             <UserCircle className="w-8 h-8 hover:text-contrast transition-colors" />

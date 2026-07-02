@@ -306,7 +306,11 @@ export function useRoom() {
     });
 
     socket.on('chat:message', (data) => {
-      setChatMessages((prev) => [...prev, data]);
+      setChatMessages((prev) => {
+        const next = [...prev, data];
+        if (next.length > 100) return next.slice(next.length - 100);
+        return next;
+      });
     });
 
     return () => {

@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import type { PositionCard as IPositionCard } from '@/types';
+import Button from '@/components/ui/Button';
 import PositionCard from '@/components/library/PositionCard';
 import Skeleton from '@/components/ui/Skeleton';
+import Link from 'next/link';
 
 export default function HistoryPage() {
   const [historyItems, setHistoryItems] = useState<IPositionCard[]>([]);
@@ -70,9 +72,14 @@ export default function HistoryPage() {
           <span className="text-sm font-bold uppercase tracking-widest text-secondary mb-1">
             No history yet
           </span>
-          <span className="text-xs text-muted max-w-xs leading-relaxed">
+          <span className="text-xs text-muted max-w-xs leading-relaxed mb-6">
             History lists cards revealed during live gameplay sessions. Play a game to record history.
           </span>
+          <Link href="/play">
+            <Button variant="primary" size="md">
+              Start Discovery
+            </Button>
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

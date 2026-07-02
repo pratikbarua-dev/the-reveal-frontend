@@ -24,6 +24,7 @@ export async function GET(req: Request) {
         name: user.name,
         image: user.image,
         isOnboarded: user.isOnboarded,
+        playMode: (user as any).playMode || 'solo',
         preferredPartySize: user.preferredPartySize,
         hardLimits: user.hardLimits || [],
         participantNames: user.participantNames || [],
@@ -44,9 +45,15 @@ export async function PATCH(req: Request) {
     }
 
     const body = await req.json();
-    const { preferredPartySize, hardLimits, participantNames } = body;
+    const { playMode, preferredPartySize, hardLimits, participantNames } = body;
 
     const updates: any = {};
+    if (playMode !== undefined) {
+      if (!['solo', 'partner'].includes(playMode)) {
+        return NextResponse.json({ error: 'Invalid play mode' }, { status: 400 });
+      }
+      updates.playMode = playMode;
+    }
     if (preferredPartySize !== undefined) {
       if (![2, 3, 4].includes(preferredPartySize)) {
         return NextResponse.json({ error: 'Invalid party size preference' }, { status: 400 });
@@ -80,6 +87,7 @@ export async function PATCH(req: Request) {
         name: updatedUser.name,
         image: updatedUser.image,
         isOnboarded: updatedUser.isOnboarded,
+        playMode: (updatedUser as any).playMode || 'solo',
         preferredPartySize: updatedUser.preferredPartySize,
         hardLimits: updatedUser.hardLimits || [],
         participantNames: updatedUser.participantNames || [],

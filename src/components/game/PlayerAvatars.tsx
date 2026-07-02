@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { IParticipant } from '@/types';
 import { User } from 'lucide-react';
+import Image from 'next/image';
 
 interface PlayerAvatarsProps {
   participants: IParticipant[];

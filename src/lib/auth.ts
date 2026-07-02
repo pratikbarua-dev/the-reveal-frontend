@@ -58,6 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (dbUser) {
           token.userId = dbUser._id.toString();
           token.isOnboarded = dbUser.isOnboarded;
+          token.isAdmin = dbUser.isAdmin;
         }
       }
       return token;
@@ -67,6 +68,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (token) {
         session.user.id = token.userId as string;
         (session as any).isOnboarded = token.isOnboarded as boolean;
+        (session as any).isAdmin = token.isAdmin as boolean;
       }
       return session;
     },

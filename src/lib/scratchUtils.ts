@@ -127,9 +127,11 @@ export function scratchLine(
   fromY: number,
   toX: number,
   toY: number,
-  radius: number = 25
+  radius: number = 25,
+  opacity: number = 1.0
 ): void {
   ctx.globalCompositeOperation = 'destination-out';
+  ctx.globalAlpha = opacity;
   ctx.strokeStyle = 'rgba(0, 0, 0, 1.0)';
   ctx.lineWidth = radius * 2;
   ctx.lineCap = 'round';
@@ -138,6 +140,7 @@ export function scratchLine(
   ctx.moveTo(fromX, fromY);
   ctx.lineTo(toX, toY);
   ctx.stroke();
+  ctx.globalAlpha = 1.0;
   ctx.globalCompositeOperation = 'source-over';
 }
 

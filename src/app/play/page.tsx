@@ -1,8 +1,9 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, RefreshCw, Copy, Check } from 'lucide-react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { MessageSquare, RefreshCw, Copy, Check, User, Users, Share, Heart, ArrowLeft } from 'lucide-react';
 import { useRoom } from '@/hooks/useRoom';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -14,6 +15,8 @@ import PlayerAvatars from '@/components/game/PlayerAvatars';
 import VetoModal from '@/components/game/VetoModal';
 import ReactionOverlay from '@/components/game/ReactionOverlay';
 import ChatDrawer from '@/components/game/ChatDrawer';
+import PlayModeStep from '@/components/onboarding/PlayModeStep';
+import BitingLipSpinner from '@/components/ui/BitingLipSpinner';
 
 function playPingSound() {
   try {
@@ -39,9 +42,286 @@ function playPingSound() {
   }
 }
 
-export default function PlayPage() {
+// ============================================
+// Solo Mode Component
+// ============================================
+function SoloPlay() {
+  const { data: session } = useSession();
+  const [currentPosition, setCurrentPosition] = useState<any>(null);
+  const [assignedText, setAssignedText] = useState('');
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [revealProgress, setRevealProgress] = useState(0);
+  const [profileNames, setProfileNames] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [selectedSpice, setSelectedSpice] = useState<number[]>([]);
+  const [partnerName, setPartnerName] = useState('');
+
+  // Load saved spice filter on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('soloSpiceFilter');
+    if (saved) setSelectedSpice(JSON.parse(saved));
+  }, []);
+
+  const handleSpiceToggle = (level: number) => {
+    setSelectedSpice((prev) => {
+      const next = prev.includes(level) ? prev.filter((l) => l !== level) : [...prev, level];
+      localStorage.setItem('soloSpiceFilter', JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // Fetch profile names for role assignment
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/profile');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.profile?.participantNames?.length > 0) {
+            setProfileNames(data.profile.participantNames);
+            if (data.profile.participantNames.length > 1) {
+              setPartnerName(data.profile.participantNames[1]);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load profile names:', e);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  // Auto-load first card
+  useEffect(() => {
+    if (!currentPosition && !loading) {
+      loadNextPosition();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadNextPosition = async () => {
+    setLoading(true);
+    try {
+      let url = '/api/positions/random?partySize=2';
+      if (selectedSpice.length > 0) {
+        url += `&spiceLevels=${selectedSpice.join(',')}`;
+      }
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to load random position');
+      const position = await res.json();
+
+      // Assign roles using profile names or defaults
+      const namesToUse = [...profileNames];
+      if (namesToUse.length === 0 && session?.user?.name) {
+        namesToUse.push(session.user.name);
+      }
+      if (partnerName.trim()) {
+        namesToUse[1] = partnerName.trim();
+      }
+      while (namesToUse.length < 2) {
+        namesToUse.push(`Player ${namesToUse.length + 1}`);
+      }
+
+      const assignRoles = (template: string, names: string[]) => {
+        let result = template;
+        names.forEach((name, i) => {
+          result = result.replaceAll(`{Player${i + 1}}`, name);
+        });
+        return result;
+      };
+
+      const finalText = assignRoles(position.descriptionTemplate, namesToUse);
+
+      setCurrentPosition(position);
+      setAssignedText(finalText);
+      setIsRevealed(false);
+      setRevealProgress(0);
+      setIsFavorited(false);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Live-update the card text if they change the partner name while viewing it
+  useEffect(() => {
+    if (currentPosition) {
+      const namesToUse = [...profileNames];
+      if (namesToUse.length === 0 && session?.user?.name) {
+        namesToUse.push(session.user.name);
+      }
+      if (partnerName.trim()) {
+        namesToUse[1] = partnerName.trim();
+      }
+      while (namesToUse.length < 2) {
+        namesToUse.push(`Player ${namesToUse.length + 1}`);
+      }
+
+      let result = currentPosition.descriptionTemplate || '';
+      namesToUse.forEach((name, i) => {
+        result = result.replaceAll(`{Player${i + 1}}`, name);
+      });
+      setAssignedText(result);
+    }
+  }, [partnerName, currentPosition, profileNames, session]);
+
+  const handleNext = () => {
+    setCurrentPosition(null);
+    setAssignedText('');
+    setIsRevealed(false);
+    setRevealProgress(0);
+    loadNextPosition();
+  };
+
+  const handleReset = () => {
+    setIsRevealed(false);
+    setRevealProgress(0);
+  };
+
+  const handleRevealComplete = async () => {
+    setIsRevealed(true);
+    if (currentPosition?._id) {
+      try {
+        await fetch('/api/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ positionId: currentPosition._id }),
+        });
+      } catch (err) {
+        console.error('Failed to save to history:', err);
+      }
+    }
+  };
+
+  const handleFavoriteToggle = async () => {
+    if (!currentPosition?._id) return;
+    try {
+      const method = isFavorited ? 'DELETE' : 'POST';
+      const url = isFavorited ? `/api/favorites?positionId=${currentPosition._id}` : '/api/favorites';
+
+      await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: isFavorited ? undefined : JSON.stringify({ positionId: currentPosition._id }),
+      });
+      setIsFavorited(!isFavorited);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return (
+    <div className="relative min-h-[calc(100vh-8rem)] flex flex-col items-center justify-between p-6 bg-surface overflow-hidden gap-6">
+      {/* Solo mode header */}
+      <div className="w-full max-w-lg flex flex-col gap-5 mt-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-full bg-secondary/10 border border-secondary/20">
+              <User className="w-4 h-4 text-secondary" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-secondary/80 font-sans hidden sm:inline">
+              Solo Discovery
+            </span>
+          </div>
+          
+          <div className="flex gap-1.5">
+            {[1, 2, 3].map((level) => (
+              <button
+                key={level}
+                onClick={() => handleSpiceToggle(level)}
+                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full border transition-all ${
+                  selectedSpice.includes(level)
+                    ? 'bg-primary border-primary text-contrast shadow-glow'
+                    : 'bg-surface border-surface-elevated text-muted'
+                }`}
+              >
+                {level === 1 ? '🌶 Mild' : level === 2 ? '🌶🌶 Spicy' : '🌶🌶🌶 Inferno'}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="px-1">
+          <Input 
+            placeholder="Partner's Name (Optional)" 
+            value={partnerName}
+            onChange={(e) => setPartnerName(e.target.value)}
+            className="text-xs py-2 text-center"
+          />
+        </div>
+        
+        <ProgressBar progress={revealProgress} />
+      </div>
+
+      <div className="flex-1 flex items-center justify-center w-full">
+        {currentPosition ? (
+          <ScratchCard
+            roomId="solo"
+            title={currentPosition.title}
+            assignedText={assignedText}
+            spiceLevel={currentPosition.spiceLevel}
+            tags={currentPosition.tags}
+            imageUrl={currentPosition.imageUrl}
+            isRevealed={isRevealed}
+            onRevealComplete={handleRevealComplete}
+            revealProgress={revealProgress}
+            onProgressUpdate={setRevealProgress}
+          />
+        ) : (
+          <div className="w-full max-w-lg aspect-[4/3] bg-surface-light border border-primary/20 rounded-[var(--radius-card)] flex flex-col items-center justify-center text-muted font-sans text-xs gap-3">
+            <BitingLipSpinner className="w-10 h-10" />
+            <span className="uppercase tracking-widest font-bold">Drawing card...</span>
+          </div>
+        )}
+      </div>
+
+      <div className="w-full max-w-lg flex flex-col gap-5">
+        <div className="flex items-center justify-center gap-3">
+          <Button
+            variant="ghost"
+            size="md"
+            onClick={handleReset}
+            disabled={!currentPosition}
+          >
+            Reset
+          </Button>
+          <Button
+            variant="ghost"
+            size="md"
+            onClick={handleFavoriteToggle}
+            disabled={!currentPosition || !isRevealed}
+            className={`transition-colors ${isFavorited ? 'text-rose-500 hover:text-rose-600 bg-rose-500/10' : ''}`}
+          >
+            <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current text-rose-500' : ''}`} />
+          </Button>
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={handleNext}
+            disabled={loading}
+            className="flex-1"
+          >
+            Next Card
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// Main Play Page
+// ============================================
+function PlayPageContent() {
   const { data: session } = useSession();
   const userId = session?.user?.id || '';
+  const searchParams = useSearchParams();
+
+  const [playMode, setPlayMode] = useState<'solo' | 'partner' | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [lobbyPartySize, setLobbyPartySize] = useState<2 | 3 | 4>(2);
 
   const {
     socket,
@@ -78,16 +358,54 @@ export default function PlayPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const prevMessagesCount = useRef(chatMessages.length);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
 
-  // Auto-rejoin if a saved room code exists in localStorage
+  // Fetch profile to determine play mode
   useEffect(() => {
-    if (userId && !roomState) {
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch('/api/profile');
+        if (res.ok) {
+          const data = await res.json();
+          // setPlayMode(data.profile?.playMode || 'solo'); // Removed auto-routing
+          if (data.profile?.participantNames?.length > 0) {
+            setProfileNames(data.profile.participantNames);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load profile:', e);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  // Handle auto-join from URL parameter
+  const joinCode = searchParams.get('join');
+  const hasAttemptedJoin = useRef(false);
+
+  useEffect(() => {
+    if (joinCode && !roomState && playMode !== 'partner' && !hasAttemptedJoin.current) {
+      hasAttemptedJoin.current = true;
+      setPlayMode('partner');
+      joinRoom(joinCode.toUpperCase());
+      // Remove ?join from URL to prevent infinite loops if the user changes mode
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', '/play');
+      }
+    }
+  }, [joinCode, roomState, playMode, joinRoom]);
+
+  // Auto-rejoin if a saved room code exists in localStorage (partner mode only)
+  useEffect(() => {
+    if (playMode === 'partner' && userId && !roomState) {
       const savedRoomCode = localStorage.getItem('activeRoomCode');
       if (savedRoomCode) {
         joinRoom(savedRoomCode);
       }
     }
-  }, [userId, roomState, joinRoom]);
+  }, [userId, roomState, joinRoom, playMode]);
 
   // Manage unread message badge count reactive to new messages & chat drawer open state
   useEffect(() => {
@@ -104,80 +422,14 @@ export default function PlayPage() {
     prevMessagesCount.current = chatMessages.length;
   }, [chatMessages, chatOpen, userId]);
 
-  // Fetch onboarding names for dynamic placeholders mapping fallback
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch('/api/profile');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.participantNames && data.participantNames.length > 0) {
-            setProfileNames(data.participantNames);
-          }
-        }
-      } catch (e) {
-        console.error('Failed to load profile names:', e);
-      }
-    };
-    fetchProfile();
-  }, []);
-
   // If in active room, fetch a random card initially if none loaded
   // Any player can trigger this if the card is missing, to prevent deadlocks.
   useEffect(() => {
     if (roomState && roomState.status === 'active' && !currentPosition) {
-      loadNextPosition();
+      nextCard();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomState, currentPosition, isHost]);
-
-  const loadNextPosition = async () => {
-    try {
-      const partySize = roomState?.settings?.partySize || 2;
-      const res = await fetch(`/api/positions/random?partySize=${partySize}`);
-      if (!res.ok) throw new Error('Failed to load random position');
-      const position = await res.json();
-
-      // Assign roles from connected session names padded with onboarding names
-      const participants = roomState?.participants.map((p) => p.displayName) || [];
-      const namesToUse = [...participants];
-      
-      const targetCount = roomState?.settings?.partySize || 2;
-      for (let i = namesToUse.length; i < targetCount; i++) {
-        if (profileNames && profileNames[i]) {
-          namesToUse.push(profileNames[i]);
-        } else {
-          namesToUse.push(`Player ${i + 1}`);
-        }
-      }
-
-      const assignRoles = (template: string, names: string[]) => {
-        let result = template;
-        names.forEach((name, i) => {
-          result = result.replaceAll(`{Player${i + 1}}`, name);
-        });
-        return result;
-      };
-
-      const finalText = assignRoles(position.descriptionTemplate, namesToUse);
-
-      setCurrentPosition(position);
-      setAssignedText(finalText);
-      setIsRevealed(false);
-      setRevealProgress(0);
-
-      // Synchronize the card details to all other players in the room
-      if (socket && roomState) {
-        socket.emit('card:sync', {
-          roomId: (roomState as any).roomId || roomState.roomCode,
-          position,
-          assignedText: finalText,
-        });
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const handleCopyCode = () => {
     if (!roomState) return;
@@ -186,13 +438,52 @@ export default function PlayPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Loading state
+  if (loadingProfile) {
+    return (
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-surface">
+        <div className="flex flex-col items-center gap-3">
+          <BitingLipSpinner className="w-10 h-10" />
+          <span className="text-xs text-muted uppercase tracking-widest font-bold font-sans">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // If mode not selected, show mode selector
+  if (playMode === null) {
+    return (
+      <div className="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-6 bg-surface overflow-hidden">
+        <div className="relative z-10 w-full max-w-md bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] shadow-glow-subtle p-6 md:p-8 flex flex-col gap-6">
+          <PlayModeStep value={null as any} onChange={(mode) => setPlayMode(mode)} />
+        </div>
+      </div>
+    );
+  }
+
+  // Solo mode — render the self-contained solo experience
+  if (playMode === 'solo') {
+    return <SoloPlay />;
+  }
+
+  // ============================================
+  // Partner mode — existing multiplayer lobby flow
+  // ============================================
 
   if (!roomState) {
     return (
       <div className="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-6 bg-surface overflow-hidden">
         {/* Lobby selector panel */}
         <div className="relative z-10 w-full max-w-md bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] shadow-glow p-6 md:p-8 flex flex-col gap-6">
-          <div className="text-center">
+          <button 
+            onClick={() => setPlayMode(null)}
+            className="absolute top-4 left-4 p-2 text-muted hover:text-contrast transition-colors flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest"
+          >
+            <ArrowLeft className="w-3 h-3" />
+            Mode
+          </button>
+          
+          <div className="text-center mt-2">
             <h1 className="text-3xl font-black tracking-tight text-gradient uppercase font-sans">
               Enter Discovery
             </h1>
@@ -230,20 +521,40 @@ export default function PlayPage() {
             </div>
 
             {/* Create Room */}
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() =>
-                createRoom({
-                  partySize: 2,
-                  hardLimits: [],
-                  turnBased: false,
-                })
-              }
-              className="w-full"
-            >
-              Host Lobby
-            </Button>
+            <div className="flex flex-col gap-3 p-4 bg-surface-elevated/40 rounded-[var(--radius-card)] border border-primary/10">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-secondary font-sans text-center">
+                Host New Lobby
+              </span>
+              <div className="flex justify-center gap-2 mb-2">
+                {[2, 3, 4].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setLobbyPartySize(size as 2 | 3 | 4)}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-all ${
+                      lobbyPartySize === size
+                        ? 'bg-primary border-primary text-contrast shadow-glow'
+                        : 'bg-surface border-surface-elevated text-muted'
+                    }`}
+                  >
+                    {size} Players
+                  </button>
+                ))}
+              </div>
+              <Button
+                variant="primary"
+                size="lg"
+                onClick={() =>
+                  createRoom({
+                    partySize: lobbyPartySize,
+                    hardLimits: [],
+                    turnBased: false,
+                  })
+                }
+                className="w-full"
+              >
+                Host Lobby
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -257,16 +568,23 @@ export default function PlayPage() {
         <div className="relative z-10 w-full max-w-md bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] shadow-glow p-6 md:p-8 flex flex-col gap-6 font-sans">
           <div className="text-center">
             <span className="text-[9px] font-bold text-secondary uppercase tracking-[0.2em]">Lobby Code</span>
-            <div className="flex items-center justify-center gap-2 mt-1.5">
-              <span className="text-3xl font-black text-contrast tracking-widest uppercase">
-                {roomState.roomCode}
-              </span>
-              <button
-                onClick={handleCopyCode}
-                className="p-1.5 text-muted hover:text-contrast active:scale-90 transition-transform cursor-pointer"
-              >
-                {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
-              </button>
+            <div className="flex flex-col items-center justify-center mt-1.5 gap-4">
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-3xl font-black text-contrast tracking-widest uppercase">
+                  {roomState.roomCode}
+                </span>
+                <button
+                  onClick={handleCopyCode}
+                  className="p-1.5 text-muted hover:text-contrast active:scale-90 transition-transform cursor-pointer"
+                  title="Copy Code"
+                >
+                  {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+              <Button variant="secondary" size="md" onClick={() => setShareModalOpen(true)} className="flex items-center justify-center gap-2 w-full max-w-[200px] border border-primary/20 hover:border-primary/50">
+                <Share className="w-4 h-4" />
+                Invite Partner
+              </Button>
             </div>
           </div>
 
@@ -317,6 +635,53 @@ export default function PlayPage() {
             </div>
           </div>
         )}
+
+        {/* Share Invite Link Modal */}
+        {shareModalOpen && roomState && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5 relative">
+              <h3 className="text-base font-black text-secondary uppercase tracking-wider text-center font-sans">
+                Invite Your Partner
+              </h3>
+              <p className="text-xs text-muted text-center leading-relaxed font-sans">
+                Send this link to your partner so they can join your discovery session instantly!
+              </p>
+              
+              <div className="flex items-center justify-between p-3 bg-surface-elevated/40 border border-primary/10 rounded-md">
+                <span className="text-xs text-contrast truncate w-full mr-3">
+                  {`${window.location.origin}/play?join=${roomState.roomCode}`}
+                </span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/play?join=${roomState.roomCode}`);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="text-muted hover:text-contrast shrink-0"
+                >
+                  {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                {typeof navigator !== 'undefined' && navigator.share && (
+                  <Button variant="primary" size="md" onClick={() => {
+                    navigator.share({
+                      title: 'Join my Reveal Session',
+                      text: `Join my intimate discovery session on The Reveal!`,
+                      url: `${window.location.origin}/play?join=${roomState.roomCode}`,
+                    }).catch(console.error);
+                  }}>
+                    Share via App...
+                  </Button>
+                )}
+                <Button variant="ghost" size="md" onClick={() => setShareModalOpen(false)}>
+                  Done
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -361,7 +726,7 @@ export default function PlayPage() {
           />
         ) : (
           <div className="w-full max-w-lg aspect-[4/3] bg-surface-light border border-primary/20 rounded-[var(--radius-card)] flex flex-col items-center justify-center text-muted font-sans text-xs gap-3">
-            <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+            <BitingLipSpinner className="w-10 h-10" />
             <span className="uppercase tracking-widest font-bold">Drawing card...</span>
           </div>
         )}
@@ -401,7 +766,7 @@ export default function PlayPage() {
       {/* Leave Session Confirmation Modal */}
       {leaveModalOpen && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5">
+          <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5 relative">
             <h3 className="text-base font-black text-secondary uppercase tracking-wider text-center font-sans">
               Leave Session?
             </h3>
@@ -422,6 +787,68 @@ export default function PlayPage() {
           </div>
         </div>
       )}
+
+      {/* Share Invite Link Modal */}
+      {shareModalOpen && roomState && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5 relative">
+            <h3 className="text-base font-black text-secondary uppercase tracking-wider text-center font-sans">
+              Invite Your Partner
+            </h3>
+            <p className="text-xs text-muted text-center leading-relaxed font-sans">
+              Send this link to your partner so they can join your discovery session instantly!
+            </p>
+            
+            <div className="flex items-center justify-between p-3 bg-surface-elevated/40 border border-primary/10 rounded-md">
+              <span className="text-xs text-contrast truncate w-full mr-3">
+                {`${window.location.origin}/play?join=${roomState.roomCode}`}
+              </span>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/play?join=${roomState.roomCode}`);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }}
+                className="text-muted hover:text-contrast shrink-0"
+              >
+                {copied ? <Check className="w-4 h-4 text-success" /> : <Copy className="w-4 h-4" />}
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              {typeof navigator !== 'undefined' && navigator.share && (
+                <Button variant="primary" size="md" onClick={() => {
+                  navigator.share({
+                    title: 'Join my Reveal Session',
+                    text: `Join my intimate discovery session on The Reveal!`,
+                    url: `${window.location.origin}/play?join=${roomState.roomCode}`,
+                  }).catch(console.error);
+                }}>
+                  Share via App...
+                </Button>
+              )}
+              <Button variant="ghost" size="md" onClick={() => setShareModalOpen(false)}>
+                Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+// ============================================
+// Default Export with Suspense
+// ============================================
+export default function PlayPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center bg-surface">
+        <BitingLipSpinner className="w-10 h-10" />
+      </div>
+    }>
+      <PlayPageContent />
+    </Suspense>
   );
 }

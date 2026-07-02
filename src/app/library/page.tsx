@@ -6,6 +6,7 @@ import FilterBar from '@/components/library/FilterBar';
 import PositionCard from '@/components/library/PositionCard';
 import Skeleton from '@/components/ui/Skeleton';
 import Button from '@/components/ui/Button';
+import Link from 'next/link';
 
 export default function LibraryPage() {
   const [search, setSearch] = useState('');
@@ -71,9 +72,23 @@ export default function LibraryPage() {
           <span className="text-sm font-bold uppercase tracking-widest text-secondary mb-1">
             No matches found
           </span>
-          <span className="text-xs text-muted max-w-xs leading-relaxed">
-            Try resetting filters or adjusting search parameters to explore positions.
+          <span className="text-xs text-muted max-w-xs leading-relaxed mb-6">
+            {showFavorites ? 'You have no favorited cards. Play a session to discover new favorites!' : 'Try resetting filters or adjusting search parameters to explore positions.'}
           </span>
+          {showFavorites ? (
+            <Link href="/play">
+              <Button variant="primary" size="md">Start Discovery</Button>
+            </Link>
+          ) : (
+            <Button variant="ghost" size="md" onClick={() => {
+              setSearchQuery('');
+              setSpiceFilter(0);
+              setTagsFilter([]);
+              setPartySizeFilter(2);
+            }}>
+              Reset Filters
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

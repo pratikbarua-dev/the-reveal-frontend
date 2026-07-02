@@ -35,6 +35,11 @@ const UserSchema = new Schema<UserDocument>(
       type: Boolean,
       default: false,
     },
+    playMode: {
+      type: String,
+      enum: ['solo', 'partner'],
+      default: 'solo',
+    },
     preferredPartySize: {
       type: Number,
       enum: [2, 3, 4],
@@ -63,13 +68,18 @@ const UserSchema = new Schema<UserDocument>(
       },
     ],
 
-    // Revealed History
     history: [
       {
         type: Schema.Types.ObjectId,
         ref: 'Position',
       },
     ],
+
+    // Admin
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

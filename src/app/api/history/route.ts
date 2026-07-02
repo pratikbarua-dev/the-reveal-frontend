@@ -39,3 +39,35 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const session = await auth();
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { positionId } = await req.json();
+    if (!positionId) {
+      return NextResponse.json({ error: 'Position ID is required' }, { status: 400 });
+    }
+
+    await dbConnect();
+
+    // Add position to history, $addToSet prevents duplicates
+    const user = await User.findOneAndUpdate(
+      { email: session.user.email },
+      { $addToSet: { history: positionId } },
+      { new: true }
+    );
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error: any) {
+    console.error('Error saving to history:', error);
+    return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+  }
+}

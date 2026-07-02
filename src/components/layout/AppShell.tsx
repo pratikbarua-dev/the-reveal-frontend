@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from 'react';
 import TopNav from './TopNav';
 import BottomNav from './BottomNav';
 import Skeleton from '../ui/Skeleton';
+import BitingLipSpinner from '../ui/BitingLipSpinner';
 
 interface AppShellProps {
   children: ReactNode;
@@ -35,7 +36,7 @@ export default function AppShell({ children }: AppShellProps) {
   if (status === 'loading') {
     return (
       <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-6">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-glow mb-4" />
+        <BitingLipSpinner className="w-16 h-16 mb-6" />
         <span className="text-sm font-semibold tracking-widest text-secondary uppercase animate-pulse">
           Connecting to The Reveal
         </span>
