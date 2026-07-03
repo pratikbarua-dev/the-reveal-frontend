@@ -26,6 +26,7 @@ export default function AppShell({ children }: AppShellProps) {
   const isAuthPage = pathname === '/';
   const isOnboardingPage = pathname === '/onboarding';
   const isAdminPage = pathname.startsWith('/admin');
+  const isPublicPage = pathname === '/privacy' || pathname === '/terms';
 
   // Fetch auth mode from backend on mount
   useEffect(() => {
@@ -67,8 +68,8 @@ export default function AppShell({ children }: AppShellProps) {
   useEffect(() => {
     // Wait for authMode to load
     if (!authMode) return;
-    // Admin pages handle their own auth — don't interfere
-    if (isAdminPage) return;
+    // Admin and public static pages don't need auth redirects
+    if (isAdminPage || isPublicPage) return;
 
     if (authMode === 'login') {
       // Login required mode — must authenticate

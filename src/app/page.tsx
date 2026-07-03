@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 import HeroSection from '@/components/landing/HeroSection';
 import DemoSection from '@/components/landing/DemoSection';
@@ -38,12 +39,22 @@ export default function Home() {
         <PartnerSection />
         <FinalCTA />
 
-        {/* Minimal Footer */}
+        {/* Minimal Footer with Legal Links */}
         <footer className="py-8 px-6 bg-black border-t border-white/[0.04]">
-          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-            <span className="text-xs font-black tracking-tight text-gradient uppercase">
-              THE REVEAL
-            </span>
+          <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-6">
+              <span className="text-xs font-black tracking-tight text-gradient uppercase">
+                THE REVEAL
+              </span>
+              <div className="flex gap-4 text-[10px] uppercase tracking-wider font-semibold">
+                <Link href="/privacy" className="text-white/40 hover:text-white transition-colors">
+                  Privacy Policy
+                </Link>
+                <Link href="/terms" className="text-white/40 hover:text-white transition-colors">
+                  Terms of Service
+                </Link>
+              </div>
+            </div>
             <span className="text-[9px] uppercase tracking-[0.2em] text-white/20 font-sans font-semibold">
               © 2026 The Reveal. All rights reserved.
             </span>
