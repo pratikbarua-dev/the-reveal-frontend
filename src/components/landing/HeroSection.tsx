@@ -64,14 +64,14 @@ export default function HeroSection() {
           ))}
         </div>
 
-        {/* Flirty Tagline */}
+        {/* Flirty Tagline with App Purpose explanation */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.9 }}
-          className="text-white/70 text-sm sm:text-base md:text-lg max-w-md mx-auto leading-relaxed font-sans font-light italic"
+          className="text-white/70 text-sm sm:text-base md:text-lg max-w-lg mx-auto leading-relaxed font-sans font-light italic"
         >
-          Some things are better&hellip; uncovered slowly.
+          Some things are better&hellip; uncovered slowly. The Reveal is a playful, interactive scratch-card game for partners to explore intimacy, communicate desires, and build connection together.
         </motion.p>
 
         {/* CTA — adapts to auth mode */}
@@ -81,11 +81,19 @@ export default function HeroSection() {
           transition={{ duration: 0.6, delay: 1.2 }}
           className="mt-4 flex flex-col sm:flex-row gap-4 items-center justify-center w-full max-w-md"
         >
-          {/* Login Required mode: only show login button */}
+          {/* Login Required mode: show login button and a learn more button */}
           {authMode === 'login' && (
-            <div className="w-full sm:w-auto hover:scale-105 transition-transform duration-500">
-              <LoginButton />
-            </div>
+            <>
+              <div className="w-full sm:w-auto hover:scale-105 transition-transform duration-500">
+                <LoginButton />
+              </div>
+              <button 
+                onClick={() => document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="w-full sm:w-48 bg-white/10 hover:bg-white/15 border border-white/20 text-contrast font-bold text-sm tracking-widest uppercase py-3.5 px-6 rounded-2xl transition-all duration-300"
+              >
+                Learn More
+              </button>
+            </>
           )}
 
           {/* Guest Only mode: only show "Start Playing" to go straight to play */}
