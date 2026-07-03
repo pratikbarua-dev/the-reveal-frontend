@@ -4,6 +4,8 @@ import { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Image from 'next/image';
 import LoginButton from '@/components/auth/LoginButton';
+import Link from 'next/link';
+import Button from '@/components/ui/Button';
 
 export default function FinalCTA() {
   const ref = useRef<HTMLDivElement>(null);
@@ -42,8 +44,21 @@ export default function FinalCTA() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={isInView ? { opacity: 1, scale: 1 } : {}}
           transition={{ duration: 0.6, delay: 0.3 }}
+          className="flex flex-col sm:flex-row gap-4 items-center justify-center w-full"
         >
-          <div className="p-[2px] rounded-2xl bg-gradient-to-tr from-primary/50 via-primary/20 to-secondary/40 shadow-glow-intense animate-glow-pulse hover:scale-105 transition-transform duration-500">
+          <div className="p-[2px] rounded-2xl bg-gradient-to-tr from-primary/50 via-primary/20 to-secondary/40 shadow-glow-intense animate-glow-pulse hover:scale-105 transition-transform duration-500 w-full sm:w-auto">
+            <Link href="/play" className="block w-full">
+              <Button
+                variant="primary"
+                size="lg"
+                className="w-full sm:w-48 font-bold text-sm tracking-widest uppercase"
+              >
+                Host a Game
+              </Button>
+            </Link>
+          </div>
+
+          <div className="w-full sm:w-auto hover:scale-105 transition-transform duration-500">
             <LoginButton />
           </div>
         </motion.div>

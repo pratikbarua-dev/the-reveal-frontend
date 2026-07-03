@@ -76,9 +76,21 @@ const UserSchema = new Schema<UserDocument>(
     ],
 
     // Admin
+    // Admin
     isAdmin: {
       type: Boolean,
       default: false,
+    },
+
+    // User Statistics
+    lastSeen: {
+      type: Date,
+      default: Date.now,
+    },
+    statistics: {
+      sessionsPlayed: { type: Number, default: 0 },
+      sessionsHosted: { type: Number, default: 0 },
+      vetoesCast: { type: Number, default: 0 },
     },
   },
   {

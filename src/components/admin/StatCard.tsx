@@ -22,8 +22,12 @@ export default function StatCard({ title, value, icon: Icon, trend, trendUp }: S
       <div className="flex items-end justify-between">
         <span className="text-3xl font-black text-contrast">{value}</span>
         {trend && (
-          <span className={`text-xs font-bold ${trendUp ? 'text-green-400' : 'text-rose-400'}`}>
-            {trendUp ? '↑' : '↓'} {trend}
+          <span className={`text-xs font-bold ${
+            trendUp !== undefined 
+              ? (trendUp ? 'text-green-400' : 'text-rose-400') 
+              : 'text-muted'
+          }`}>
+            {trendUp !== undefined && (trendUp ? '↑ ' : '↓ ')}{trend}
           </span>
         )}
       </div>

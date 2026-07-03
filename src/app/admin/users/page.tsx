@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import DataTable from '@/components/admin/DataTable';
+import Link from 'next/link';
+import { BarChart3 } from 'lucide-react';
 
 interface AdminUser {
   _id: string;
@@ -95,6 +97,16 @@ export default function AdminUsersPage() {
         <span className="text-xs text-muted">
           {new Date(user.createdAt).toLocaleDateString()}
         </span>
+      )
+    },
+    {
+      header: 'Actions',
+      accessorKey: '_id',
+      cell: (user: AdminUser) => (
+        <Link href={`/admin/users/${user._id}`} className="px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/30 rounded text-xs font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-1.5 w-fit">
+          <BarChart3 className="w-3.5 h-3.5" />
+          View Profile
+        </Link>
       )
     }
   ];

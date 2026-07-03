@@ -2,16 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Users, Grid, Radio, History, Server, LogOut, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, MessageSquareHeart, Grid, Radio, History, Server, LogOut, Shield, Activity } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 
 const navItems = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'Users', href: '/admin/users', icon: Users },
+  { name: 'Feedback', href: '/admin/feedback', icon: MessageSquareHeart },
   { name: 'Content', href: '/admin/content', icon: Grid },
   { name: 'Live Rooms', href: '/admin/rooms', icon: Radio },
   { name: 'Sessions', href: '/admin/sessions', icon: History },
   { name: 'System', href: '/admin/system', icon: Server },
+  { name: 'Monitoring', href: '/admin/monitoring', icon: Activity },
 ];
 
 export default function AdminSidebar() {

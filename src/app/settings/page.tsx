@@ -9,9 +9,10 @@ import Card from '@/components/ui/Card';
 import Image from 'next/image';
 import Toggle from '@/components/ui/Toggle';
 import { TAG_CATEGORIES } from '@/types';
+import Link from 'next/link';
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -22,6 +23,8 @@ export default function SettingsPage() {
   const [participantNames, setParticipantNames] = useState<string[]>([]);
 
   useEffect(() => {
+    if (status === 'loading') return;
+
     async function loadProfile() {
       try {
         const res = await fetch('/api/profile');
@@ -38,8 +41,26 @@ export default function SettingsPage() {
         setLoading(false);
       }
     }
-    loadProfile();
-  }, []);
+
+    if (status === 'authenticated') {
+      loadProfile();
+    } else {
+      // Load from localStorage for guest
+      try {
+        const size = localStorage.getItem('reveal_guestPartySize');
+        setPreferredPartySize(size ? (parseInt(size, 10) as 2 | 3 | 4) : 2);
+
+        const limits = localStorage.getItem('reveal_guestLimits');
+        setHardLimits(limits ? JSON.parse(limits) : []);
+
+        const name = localStorage.getItem('reveal_guestName') || '';
+        setParticipantNames([name]);
+      } catch (e) {
+        console.error(e);
+      }
+      setLoading(false);
+    }
+  }, [status]);
 
   const handleToggleLimit = (tag: string) => {
     if (hardLimits.includes(tag)) {
@@ -64,20 +85,31 @@ export default function SettingsPage() {
     try {
       const finalNames = participantNames.slice(0, preferredPartySize).map((name, idx) => {
         if (name.trim()) return name.trim();
-        return idx === 0 ? session?.user?.name || 'Player 1' : `Player ${idx + 1}`;
+        return idx === 0
+          ? session?.user?.name || (typeof window !== 'undefined' ? localStorage.getItem('reveal_guestName') || 'Guest 1' : 'Guest 1')
+          : `Player ${idx + 1}`;
       });
 
-      const res = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          preferredPartySize,
-          hardLimits,
-          participantNames: finalNames,
-        }),
-      });
+      if (status === 'authenticated') {
+        const res = await fetch('/api/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            preferredPartySize,
+            hardLimits,
+            participantNames: finalNames,
+          }),
+        });
 
-      if (!res.ok) throw new Error('Failed to save settings');
+        if (!res.ok) throw new Error('Failed to save settings');
+      } else {
+        // Save to localStorage for guest
+        localStorage.setItem('reveal_guestPartySize', preferredPartySize.toString());
+        localStorage.setItem('reveal_guestLimits', JSON.stringify(hardLimits));
+        if (finalNames[0]) {
+          localStorage.setItem('reveal_guestName', finalNames[0]);
+        }
+      }
       setMessage('Settings saved successfully!');
       setTimeout(() => setMessage(''), 3000);
     } catch (e) {
@@ -126,21 +158,33 @@ export default function SettingsPage() {
             )}
             <div className="flex flex-col">
               <span className="text-sm font-bold text-contrast uppercase tracking-wide">
-                {session?.user?.name || 'Vellum Explorer'}
+                {session?.user?.name || (typeof window !== 'undefined' ? localStorage.getItem('reveal_guestName') || 'Guest Explorer' : 'Guest Explorer')}
               </span>
-              <span className="text-xs text-muted font-light">{session?.user?.email}</span>
+              <span className="text-xs text-muted font-light">{session?.user?.email || 'Device-Locked Guest Session'}</span>
             </div>
           </div>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => signOut()}
-            className="flex items-center gap-1.5 font-bold text-danger hover:bg-danger/10 border-danger/10 w-full sm:w-auto justify-center sm:justify-start"
-            icon={<LogOut className="w-3.5 h-3.5" />}
-          >
-            Sign Out
-          </Button>
+          {status === 'authenticated' ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => signOut()}
+              className="flex items-center gap-1.5 font-bold text-danger hover:bg-danger/10 border-danger/10 w-full sm:w-auto justify-center sm:justify-start"
+              icon={<LogOut className="w-3.5 h-3.5" />}
+            >
+              Sign Out
+            </Button>
+          ) : (
+            <Link href="/">
+              <Button
+                variant="primary"
+                size="sm"
+                className="flex items-center gap-1.5 font-bold w-full sm:w-auto justify-center sm:justify-start"
+              >
+                Sign In with Google
+              </Button>
+            </Link>
+          )}
         </Card>
 
         {/* Preference Settings Form */}

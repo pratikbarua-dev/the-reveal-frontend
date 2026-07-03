@@ -12,7 +12,7 @@ export interface GameSessionDocument
 const ParticipantSchema = new Schema(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: Schema.Types.Mixed,
       ref: 'User',
     },
     displayName: {
@@ -45,8 +45,13 @@ const GameSessionSchema = new Schema<GameSessionDocument>(
       uppercase: true,
       index: true,
     },
+    playMode: {
+      type: String,
+      enum: ['solo', 'partner'],
+      default: 'partner',
+    },
     hostUserId: {
-      type: Schema.Types.ObjectId,
+      type: Schema.Types.Mixed,
       ref: 'User',
       required: true,
     },

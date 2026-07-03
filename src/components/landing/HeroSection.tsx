@@ -4,9 +4,32 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import LoginButton from '@/components/auth/LoginButton';
 import { ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import Button from '@/components/ui/Button';
+import { useEffect, useState } from 'react';
+
+type AuthMode = 'login' | 'guest' | 'hybrid';
 
 export default function HeroSection() {
   const titleWords = ['THE', 'REVEAL'];
+  const [authMode, setAuthMode] = useState<AuthMode | null>(null);
+
+  useEffect(() => {
+    async function fetchAuthMode() {
+      try {
+        const res = await fetch('/api/config');
+        if (res.ok) {
+          const data = await res.json();
+          setAuthMode(data.authMode || 'hybrid');
+        } else {
+          setAuthMode('hybrid');
+        }
+      } catch {
+        setAuthMode('hybrid');
+      }
+    }
+    fetchAuthMode();
+  }, []);
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6">
@@ -51,16 +74,55 @@ export default function HeroSection() {
           Some things are better&hellip; uncovered slowly.
         </motion.p>
 
-        {/* CTA */}
+        {/* CTA — adapts to auth mode */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 1.2 }}
-          className="mt-4"
+          className="mt-4 flex flex-col sm:flex-row gap-4 items-center justify-center w-full max-w-md"
         >
-          <div className="p-[2px] rounded-2xl bg-gradient-to-tr from-primary/50 via-primary/20 to-secondary/40 shadow-glow-intense animate-glow-pulse hover:scale-105 transition-transform duration-500">
-            <LoginButton />
-          </div>
+          {/* Login Required mode: only show login button */}
+          {authMode === 'login' && (
+            <div className="w-full sm:w-auto hover:scale-105 transition-transform duration-500">
+              <LoginButton />
+            </div>
+          )}
+
+          {/* Guest Only mode: only show "Start Playing" to go straight to play */}
+          {authMode === 'guest' && (
+            <div className="p-[2px] rounded-2xl bg-gradient-to-tr from-primary/50 via-primary/20 to-secondary/40 shadow-glow-intense animate-glow-pulse hover:scale-105 transition-transform duration-500 w-full sm:w-auto">
+              <Link href="/play" className="block w-full">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  className="w-full sm:w-48 font-bold text-sm tracking-widest uppercase"
+                >
+                  Start Playing
+                </Button>
+              </Link>
+            </div>
+          )}
+
+          {/* Hybrid mode: show both options */}
+          {(authMode === 'hybrid' || authMode === null) && (
+            <>
+              <div className="p-[2px] rounded-2xl bg-gradient-to-tr from-primary/50 via-primary/20 to-secondary/40 shadow-glow-intense animate-glow-pulse hover:scale-105 transition-transform duration-500 w-full sm:w-auto">
+                <Link href="/play" className="block w-full">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-48 font-bold text-sm tracking-widest uppercase"
+                  >
+                    Host a Game
+                  </Button>
+                </Link>
+              </div>
+
+              <div className="w-full sm:w-auto hover:scale-105 transition-transform duration-500">
+                <LoginButton />
+              </div>
+            </>
+          )}
         </motion.div>
       </div>
 

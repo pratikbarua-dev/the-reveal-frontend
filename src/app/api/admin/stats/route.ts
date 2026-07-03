@@ -23,6 +23,8 @@ export async function GET(req: Request) {
 
     const totalPositions = await Position.countDocuments();
     const totalSessions = await GameSession.countDocuments();
+    const totalSoloSessions = await GameSession.countDocuments({ playMode: 'solo' });
+    const totalPartnerSessions = await GameSession.countDocuments({ playMode: 'partner' });
 
     // Cards revealed today
     const today = new Date();
@@ -45,6 +47,8 @@ export async function GET(req: Request) {
       newUsers24h,
       totalPositions,
       totalSessions,
+      totalSoloSessions,
+      totalPartnerSessions,
       cardsRevealedToday,
     });
   } catch (error: any) {

@@ -62,8 +62,30 @@ export function useRoom() {
   const [activeTurnIndex, setActiveTurnIndex] = useState<number>(0);
   const [reactions, setReactions] = useState<{ emoji: string; userId: string; id: string }[]>([]);
 
-  const userId = session?.user?.id || '';
-  const displayName = session?.user?.name || 'Guest';
+  const [guestId, setGuestId] = useState<string>('');
+  const [guestName, setGuestName] = useState<string>('');
+  const lastCreateSettingsRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      let gId = localStorage.getItem('reveal_guestId');
+      if (!gId) {
+        gId = 'guest_' + Math.random().toString(36).substring(2, 11);
+        localStorage.setItem('reveal_guestId', gId);
+      }
+      setGuestId(gId);
+
+      let gName = localStorage.getItem('reveal_guestName');
+      if (!gName) {
+        gName = 'Guest_' + Math.random().toString(36).substring(2, 6).toUpperCase();
+        localStorage.setItem('reveal_guestName', gName);
+      }
+      setGuestName(gName);
+    }
+  }, []);
+
+  const userId = session?.user?.id || guestId;
+  const displayName = session?.user?.name || guestName;
 
   // Synchronize state changes to localStorage
   useEffect(() => {
@@ -102,8 +124,14 @@ export function useRoom() {
   }, [isRevealed]);
 
   // Auto-rejoin room on socket connection/reconnection
+  // Skip if there's an invite link (?join=) — PlayPageContent handles that.
   useEffect(() => {
     if (!socket || !userId) return;
+
+    // Don't auto-rejoin if an invite link is being processed
+    const hasInviteCode = typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).has('join');
+    if (hasInviteCode) return;
 
     const handleConnect = () => {
       const savedRoomCode = localStorage.getItem('activeRoomCode');
@@ -131,6 +159,7 @@ export function useRoom() {
   // Room lifecycle functions
   const createRoom = useCallback((settings: any) => {
     if (!userId) return;
+    lastCreateSettingsRef.current = settings;
     socket.emit('room:create', {
       userId,
       displayName,
@@ -154,6 +183,11 @@ export function useRoom() {
     socket.emit('room:leave', { roomId: (roomState as any).roomId || roomState.roomCode });
     if (typeof window !== 'undefined') {
       localStorage.removeItem('activeRoomCode');
+      
+      // Prompt for feedback after session ends
+      if (!localStorage.getItem('reveal_feedback_prompted')) {
+        window.dispatchEvent(new Event('trigger-feedback'));
+      }
     }
     setRoomState(null);
     setCurrentPosition(null);
@@ -207,13 +241,14 @@ export function useRoom() {
     socket.on('room:created', (data) => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('activeRoomCode', data.roomCode);
+        localStorage.setItem('reveal_has_played', 'true');
       }
       // Set a temporary mock room state
       setRoomState({
         roomCode: data.roomCode,
         roomId: data.roomId,
         participants: [{ displayName, userId: userId as any, role: 'host', isConnected: true }],
-        settings: { partySize: 2, hardLimits: [], turnBased: false },
+        settings: lastCreateSettingsRef.current || { partySize: 2, hardLimits: [], turnBased: false },
         status: 'waiting',
       } as any);
     });
@@ -221,6 +256,7 @@ export function useRoom() {
     socket.on('room:joined', (data) => {
       if (typeof window !== 'undefined') {
         localStorage.setItem('activeRoomCode', data.room.roomCode);
+        localStorage.setItem('reveal_has_played', 'true');
       }
       setRoomState(data.room as any);
       if (data.room) {
@@ -332,6 +368,8 @@ export function useRoom() {
 
   return {
     socket,
+    userId,
+    displayName,
     roomState,
     currentPosition,
     assignedText,

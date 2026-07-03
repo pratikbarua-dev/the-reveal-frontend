@@ -6,12 +6,16 @@ import Button from '@/components/ui/Button';
 import PositionCard from '@/components/library/PositionCard';
 import Skeleton from '@/components/ui/Skeleton';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 export default function HistoryPage() {
+  const { status } = useSession();
   const [historyItems, setHistoryItems] = useState<IPositionCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === 'loading') return;
+
     async function loadHistory() {
       try {
         // Fetch real history from the user's profile
@@ -25,8 +29,13 @@ export default function HistoryPage() {
         setLoading(false);
       }
     }
-    loadHistory();
-  }, []);
+
+    if (status === 'authenticated') {
+      loadHistory();
+    } else {
+      setLoading(false);
+    }
+  }, [status]);
 
   const handleFavoriteToggle = async (positionId: string, currentlyFavorited: boolean) => {
     try {
@@ -66,6 +75,20 @@ export default function HistoryPage() {
               <Skeleton className="h-12 w-full" />
             </div>
           ))}
+        </div>
+      ) : status === 'unauthenticated' ? (
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-10 border border-dashed border-primary/20 rounded-[var(--radius-card)] bg-surface-light/40 font-sans">
+          <span className="text-sm font-bold uppercase tracking-widest text-secondary mb-1">
+            Cloud History Locked
+          </span>
+          <span className="text-xs text-muted max-w-xs leading-relaxed mb-6">
+            Sign in with Google to save your favorite intimate positions and track your game history across devices.
+          </span>
+          <Link href="/">
+            <Button variant="primary" size="md">
+              Sign In with Google
+            </Button>
+          </Link>
         </div>
       ) : historyItems.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-10 border border-dashed border-primary/20 rounded-[var(--radius-card)] bg-surface-light/40 font-sans">

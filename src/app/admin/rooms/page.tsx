@@ -10,7 +10,7 @@ interface LiveRoom {
   roomCode: string;
   status: 'waiting' | 'active' | 'ended';
   playerCount: number;
-  players: string[];
+  players: { userId: string; displayName: string }[];
   currentPosition?: string;
   revealProgress: number;
 }
@@ -49,6 +49,25 @@ export default function AdminRoomsPage() {
       s.disconnect();
     };
   }, []);
+
+  const handleForceEnd = (roomId: string) => {
+    if (confirm('Are you sure you want to forcefully end this session?')) {
+      socket?.emit('admin:force-end', { roomId });
+    }
+  };
+
+  const handleBroadcast = (roomId: string) => {
+    const msg = prompt('Enter message to broadcast to this room:');
+    if (msg && msg.trim()) {
+      socket?.emit('admin:broadcast', { roomId, message: msg.trim() });
+    }
+  };
+
+  const handleKick = (roomId: string, userId: string, displayName: string) => {
+    if (confirm(`Are you sure you want to kick ${displayName} from the room?`)) {
+      socket?.emit('admin:kick-player', { roomId, userId });
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl mx-auto">
@@ -94,9 +113,24 @@ export default function AdminRoomsPage() {
 
                   <div className="flex flex-col gap-1.5">
                     <span className="text-xs text-muted font-medium tracking-wide">Players:</span>
-                    <span className="text-sm text-contrast font-medium">
-                      {room.players.join(', ') || 'Waiting...'}
-                    </span>
+                    <div className="flex flex-wrap gap-2">
+                      {room.players.length === 0 ? (
+                        <span className="text-sm text-muted italic">Waiting...</span>
+                      ) : (
+                        room.players.map((p) => (
+                          <div key={p.userId} className="flex items-center gap-2 bg-surface border border-primary/10 px-2 py-1 rounded text-sm text-contrast">
+                            <span>{p.displayName}</span>
+                            <button 
+                              onClick={() => handleKick(room.roomId, p.userId, p.displayName)}
+                              className="text-rose-500 hover:text-rose-400 font-bold ml-1"
+                              title="Kick Player"
+                            >
+                              &times;
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
@@ -136,6 +170,22 @@ export default function AdminRoomsPage() {
                       ))}
                     </div>
                   )}
+                </div>
+
+                {/* Admin Actions */}
+                <div className="bg-surface-elevated p-3 border-t border-primary/20 flex gap-3">
+                  <button 
+                    onClick={() => handleBroadcast(room.roomId)}
+                    className="flex-1 py-2 bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/30 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+                  >
+                    Broadcast
+                  </button>
+                  <button 
+                    onClick={() => handleForceEnd(room.roomId)}
+                    className="flex-1 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 rounded-lg text-xs font-bold uppercase tracking-widest transition-colors"
+                  >
+                    Force End
+                  </button>
                 </div>
 
               </div>

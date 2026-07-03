@@ -22,6 +22,12 @@ export interface IUser {
   savedFavorites: Types.ObjectId[];
   history: Types.ObjectId[];
   isAdmin?: boolean;
+  lastSeen: Date;
+  statistics: {
+    sessionsPlayed: number;
+    sessionsHosted: number;
+    vetoesCast: number;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,7 +47,7 @@ export interface IPosition {
 }
 
 export interface IParticipant {
-  userId?: Types.ObjectId;
+  userId?: Types.ObjectId | string;
   displayName: string;
   avatarUrl?: string;
   role: 'host' | 'player';
@@ -51,7 +57,8 @@ export interface IParticipant {
 export interface IGameSession {
   _id: Types.ObjectId;
   roomCode: string;
-  hostUserId: Types.ObjectId;
+  playMode?: 'solo' | 'partner';
+  hostUserId: Types.ObjectId | string;
   participants: IParticipant[];
   settings: {
     partySize: number;
@@ -194,6 +201,10 @@ export interface ServerToClientEvents {
   'chat:message': (data: ChatMessage) => void;
   'turn:current': (data: { userId: string; turnIndex: number }) => void;
   'error': (data: { code: string; message: string }) => void;
+  'admin:rooms-update': (data: any[]) => void;
+  'admin:room-chat': (data: ChatMessage) => void;
+  'admin:infra-update': (data: any) => void;
+  'room:ended': (data: { reason: string }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -214,6 +225,10 @@ export interface ClientToServerEvents {
   'reaction:send': (data: ReactionPayload) => void;
   'chat:message': (data: { roomId: string; text: string }) => void;
   'turn:pass': (data: { roomId: string }) => void;
+  'admin:subscribe': () => void;
+  'admin:force-end': (data: { roomId: string }) => void;
+  'admin:broadcast': (data: { roomId: string; message: string }) => void;
+  'admin:kick-player': (data: { roomId: string; userId: string }) => void;
 }
 
 // ============================================

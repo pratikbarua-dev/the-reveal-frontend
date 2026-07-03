@@ -16,6 +16,8 @@ export default function Home() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // Redirect authenticated users away from landing (handled by AppShell too,
+  // but this provides a faster redirect for logged-in users)
   useEffect(() => {
     if (status === 'authenticated') {
       if ((session as any)?.isOnboarded) {
@@ -51,4 +53,3 @@ export default function Home() {
     </SmoothScroll>
   );
 }
-

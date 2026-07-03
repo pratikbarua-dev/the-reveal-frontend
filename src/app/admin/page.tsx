@@ -9,6 +9,8 @@ interface DashboardStats {
   newUsers24h: number;
   totalPositions: number;
   totalSessions: number;
+  totalSoloSessions: number;
+  totalPartnerSessions: number;
   cardsRevealedToday: number;
 }
 
@@ -69,6 +71,7 @@ export default function AdminDashboard() {
           title="Sessions Played" 
           value={stats?.totalSessions || 0} 
           icon={PlaySquare} 
+          trend={`Solo: ${stats?.totalSoloSessions || 0} | Partner: ${stats?.totalPartnerSessions || 0}`}
         />
         <StatCard 
           title="Cards Revealed (Today)" 

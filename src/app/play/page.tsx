@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { MessageSquare, RefreshCw, Copy, Check, User, Users, Share, Heart, ArrowLeft } from 'lucide-react';
+import { MessageSquare, RefreshCw, Copy, Check, User, Users, Share, Heart, ArrowLeft, Sparkles } from 'lucide-react';
 import { useRoom } from '@/hooks/useRoom';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -56,11 +56,25 @@ function SoloPlay() {
   const [isFavorited, setIsFavorited] = useState(false);
   const [selectedSpice, setSelectedSpice] = useState<number[]>([]);
   const [partnerName, setPartnerName] = useState('');
+  const [soloSessionId, setSoloSessionId] = useState<string>('');
 
-  // Load saved spice filter on mount
+  // Load saved spice filter and initialize solo session on mount
   useEffect(() => {
     const saved = localStorage.getItem('soloSpiceFilter');
     if (saved) setSelectedSpice(JSON.parse(saved));
+
+    // Manage solo session ID
+    let currentSession = localStorage.getItem('reveal_solo_session');
+    const sessionTimestamp = localStorage.getItem('reveal_solo_session_time');
+    const now = Date.now();
+
+    // Create a new session if none exists or if it's older than 4 hours
+    if (!currentSession || !sessionTimestamp || (now - parseInt(sessionTimestamp)) > 4 * 60 * 60 * 1000) {
+      currentSession = `SOLO-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+      localStorage.setItem('reveal_solo_session', currentSession);
+      localStorage.setItem('reveal_solo_session_time', now.toString());
+    }
+    setSoloSessionId(currentSession);
   }, []);
 
   const handleSpiceToggle = (level: number) => {
@@ -182,15 +196,19 @@ function SoloPlay() {
 
   const handleRevealComplete = async () => {
     setIsRevealed(true);
-    if (currentPosition?._id) {
+    if (currentPosition?._id && soloSessionId) {
       try {
-        await fetch('/api/history', {
+        await fetch('/api/sessions/solo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ positionId: currentPosition._id }),
+          body: JSON.stringify({ 
+            positionId: currentPosition._id,
+            soloSessionId,
+            isRevealed: true
+          }),
         });
       } catch (err) {
-        console.error('Failed to save to history:', err);
+        console.error('Failed to log robust solo session:', err);
       }
     }
   };
@@ -316,8 +334,27 @@ function SoloPlay() {
 // ============================================
 function PlayPageContent() {
   const { data: session } = useSession();
-  const userId = session?.user?.id || '';
   const searchParams = useSearchParams();
+
+  // If there's an invite join code in the URL, clear stale cached room state
+  // BEFORE useRoom initializes from localStorage. This ensures the invite link
+  // takes priority over any previous session's cached state.
+  const [initialJoinCode] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('join');
+      if (code) {
+        localStorage.removeItem('reveal_roomState');
+        localStorage.removeItem('activeRoomCode');
+        localStorage.removeItem('reveal_currentPosition');
+        localStorage.removeItem('reveal_assignedText');
+        localStorage.removeItem('reveal_revealProgress');
+        localStorage.removeItem('reveal_isRevealed');
+        return code.toUpperCase();
+      }
+    }
+    return null;
+  });
 
   const [playMode, setPlayMode] = useState<'solo' | 'partner' | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -325,6 +362,7 @@ function PlayPageContent() {
 
   const {
     socket,
+    userId,
     roomState,
     currentPosition,
     assignedText,
@@ -359,6 +397,11 @@ function PlayPageContent() {
   const prevMessagesCount = useRef(chatMessages.length);
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [shareModalOpen, setShareModalOpen] = useState(false);
+  const [showSizeOptions, setShowSizeOptions] = useState(false);
+  const [allReadyModalOpen, setAllReadyModalOpen] = useState(false);
+  const [readyCountdown, setReadyCountdown] = useState(3);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  const hasTriggeredAutoStart = useRef(false);
 
   // Fetch profile to determine play mode
   useEffect(() => {
@@ -381,31 +424,33 @@ function PlayPageContent() {
     fetchProfile();
   }, []);
 
-  // Handle auto-join from URL parameter
-  const joinCode = searchParams.get('join');
+  // Handle auto-join from URL parameter (invite link) or stale room rejoin
   const hasAttemptedJoin = useRef(false);
 
   useEffect(() => {
-    if (joinCode && !roomState && playMode !== 'partner' && !hasAttemptedJoin.current) {
+    // Invite link join — takes priority. initialJoinCode was captured from URL
+    // before useRoom initialized, and stale localStorage was already cleared.
+    if (initialJoinCode && userId && !hasAttemptedJoin.current) {
       hasAttemptedJoin.current = true;
       setPlayMode('partner');
-      joinRoom(joinCode.toUpperCase());
-      // Remove ?join from URL to prevent infinite loops if the user changes mode
+      // Force leave any stale room before joining the invite room
+      leaveRoom();
+      joinRoom(initialJoinCode);
+      // Remove ?join from URL to prevent re-triggering
       if (typeof window !== 'undefined') {
         window.history.replaceState({}, '', '/play');
       }
+      return;
     }
-  }, [joinCode, roomState, playMode, joinRoom]);
 
-  // Auto-rejoin if a saved room code exists in localStorage (partner mode only)
-  useEffect(() => {
-    if (playMode === 'partner' && userId && !roomState) {
+    // Auto-rejoin if a saved room code exists in localStorage (partner mode only)
+    if (!initialJoinCode && playMode === 'partner' && userId && !roomState) {
       const savedRoomCode = localStorage.getItem('activeRoomCode');
       if (savedRoomCode) {
         joinRoom(savedRoomCode);
       }
     }
-  }, [userId, roomState, joinRoom, playMode]);
+  }, [initialJoinCode, userId, roomState, joinRoom, leaveRoom, playMode]);
 
   // Manage unread message badge count reactive to new messages & chat drawer open state
   useEffect(() => {
@@ -430,6 +475,51 @@ function PlayPageContent() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomState, currentPosition, isHost]);
+
+  // Auto-start when room is full
+  useEffect(() => {
+    if (
+      roomState &&
+      roomState.status === 'waiting' &&
+      roomState.settings?.partySize &&
+      roomState.participants.length >= roomState.settings.partySize &&
+      !hasTriggeredAutoStart.current
+    ) {
+      hasTriggeredAutoStart.current = true;
+      setAllReadyModalOpen(true);
+      setReadyCountdown(3);
+      playPingSound();
+
+      let count = 3;
+      countdownRef.current = setInterval(() => {
+        count -= 1;
+        setReadyCountdown(count);
+        if (count <= 0) {
+          clearInterval(countdownRef.current!);
+          countdownRef.current = null;
+          setAllReadyModalOpen(false);
+          if (isHost) {
+            startRoom();
+          }
+        }
+      }, 1000);
+    }
+
+    // Reset auto-start flag when room is cleared
+    if (!roomState || roomState.status !== 'waiting') {
+      hasTriggeredAutoStart.current = false;
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+    }
+
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+      }
+    };
+  }, [roomState, isHost, startRoom]);
 
   const handleCopyCode = () => {
     if (!roomState) return;
@@ -525,21 +615,35 @@ function PlayPageContent() {
               <span className="text-[10px] font-bold uppercase tracking-widest text-secondary font-sans text-center">
                 Host New Lobby
               </span>
-              <div className="flex justify-center gap-2 mb-2">
-                {[2, 3, 4].map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => setLobbyPartySize(size as 2 | 3 | 4)}
-                    className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-all ${
-                      lobbyPartySize === size
-                        ? 'bg-primary border-primary text-contrast shadow-glow'
-                        : 'bg-surface border-surface-elevated text-muted'
-                    }`}
-                  >
-                    {size} Players
-                  </button>
-                ))}
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <span className="text-xs font-bold text-contrast">{lobbyPartySize} Players</span>
+                <button
+                  onClick={() => setShowSizeOptions(!showSizeOptions)}
+                  className="text-[10px] font-bold text-primary hover:text-primary/80 uppercase tracking-widest transition-colors underline underline-offset-2 cursor-pointer"
+                >
+                  {showSizeOptions ? 'Done' : 'Change'}
+                </button>
               </div>
+              {showSizeOptions && (
+                <div className="flex justify-center gap-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {[2, 3, 4].map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => {
+                        setLobbyPartySize(size as 2 | 3 | 4);
+                        setShowSizeOptions(false);
+                      }}
+                      className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-all ${
+                        lobbyPartySize === size
+                          ? 'bg-primary border-primary text-contrast shadow-glow'
+                          : 'bg-surface border-surface-elevated text-muted hover:border-primary/30'
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              )}
               <Button
                 variant="primary"
                 size="lg"
@@ -590,7 +694,7 @@ function PlayPageContent() {
 
           <div className="flex flex-col gap-4">
             <span className="text-xs font-bold uppercase tracking-widest text-primary font-sans text-center">
-              Players In Lobby ({roomState.participants.length}/4)
+              Players In Lobby ({roomState.participants.length}/{roomState.settings?.partySize || 2})
             </span>
             <PlayerAvatars participants={roomState.participants} hostUserId={userId} />
 
@@ -631,6 +735,48 @@ function PlayPageContent() {
                 }}>
                   Leave
                 </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* All Players Ready Modal */}
+        {allReadyModalOpen && (
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-8 shadow-glow flex flex-col items-center gap-6 animate-in zoom-in-95 fade-in duration-300">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
+                <div className="relative p-4 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30">
+                  <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-black text-gradient uppercase tracking-wider font-sans">
+                  All Players Ready!
+                </h3>
+                <p className="text-xs text-muted mt-2 uppercase tracking-widest font-sans">
+                  Starting your discovery session
+                </p>
+              </div>
+              <div className="relative w-20 h-20 flex items-center justify-center">
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="35" fill="none" stroke="var(--color-surface-elevated)" strokeWidth="4" />
+                  <circle
+                    cx="40" cy="40" r="35" fill="none" stroke="var(--color-primary)" strokeWidth="4"
+                    strokeDasharray={`${(readyCountdown / 3) * 220} 220`}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-linear"
+                  />
+                </svg>
+                <span className="text-3xl font-black text-primary font-sans">{readyCountdown}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {roomState?.participants.map((p, i) => (
+                  <div key={i} className="flex items-center gap-1 px-2 py-1 bg-surface-elevated/40 rounded-full border border-primary/10">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-[10px] font-bold text-contrast uppercase tracking-wider">{p.displayName}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
