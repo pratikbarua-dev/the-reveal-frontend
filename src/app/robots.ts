@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/admin/', '/api/'],
     },
-    sitemap: 'https://thereveal.app/sitemap.xml',
+    sitemap: 'https://reveal.probaho.site/sitemap.xml',
   };
 }

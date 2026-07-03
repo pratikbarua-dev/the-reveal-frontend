@@ -26,14 +26,14 @@ export const metadata: Metadata = {
   authors: [{ name: 'The Reveal Team' }],
   creator: 'The Reveal Team',
   publisher: 'The Reveal',
-  metadataBase: new URL('https://thereveal.app'),
+  metadataBase: new URL('https://reveal.probaho.site'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://thereveal.app',
+    url: 'https://reveal.probaho.site',
     title: 'The Reveal — Discover Intimate Positions & Connect Deeply',
     description: 'An interactive couples game for exploring intimacy, communication, and closeness slowly and mindfully.',
     siteName: 'The Reveal',

@@ -21,7 +21,7 @@ export default function TermsOfService() {
           Welcome to <strong className="text-contrast">The Reveal</strong>!
         </p>
         <p className="mb-4">
-          These terms and conditions outline the rules and regulations for the use of The Reveal's Website, located at <Link href="/" className="text-secondary hover:underline">https://the-reveal-frontend.vercel.app</Link>.
+          These terms and conditions outline the rules and regulations for the use of The Reveal's Website, located at <Link href="/" className="text-secondary hover:underline">https://reveal.probaho.site</Link>.
         </p>
         <p className="mb-4">
           By accessing this website, we assume you accept these terms and conditions. Do not continue to use The Reveal if you do not agree to take all of the terms and conditions stated on this page.

@@ -18,7 +18,7 @@ export default function PrivacyPolicy() {
 
       <section className="mb-8">
         <p className="mb-4">
-          At <strong className="text-contrast">The Reveal</strong> (accessible from <Link href="/" className="text-secondary hover:underline">https://the-reveal-frontend.vercel.app</Link>), one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by The Reveal and how we use it.
+          At <strong className="text-contrast">The Reveal</strong> (accessible from <Link href="/" className="text-secondary hover:underline">https://reveal.probaho.site</Link>), one of our main priorities is the privacy of our visitors. This Privacy Policy document contains types of information that is collected and recorded by The Reveal and how we use it.
         </p>
         <p className="mb-4">
           If you have additional questions or require more information about our Privacy Policy, do not hesitate to contact us at <strong className="text-contrast">pratikbarua52@gmail.com</strong>.
