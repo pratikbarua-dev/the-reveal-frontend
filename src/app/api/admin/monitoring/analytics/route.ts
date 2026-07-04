@@ -35,7 +35,10 @@ export async function GET(req: Request) {
     const activePartnerSessionsToday = await GameSession.countDocuments({ playMode: 'partner', createdAt: { $gte: today } });
 
     // Engagement & Preferences (last 7 days)
-    const sessions = await GameSession.find({ createdAt: { $gte: sevenDaysAgo } }).populate('history.positionId');
+    const sessions = await GameSession.find({ createdAt: { $gte: sevenDaysAgo } }).populate({
+      path: 'history.positionId',
+      model: Position
+    });
     
     let soloSessionsCount = 0;
     let partnerSessionsCount = 0;
