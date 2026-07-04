@@ -51,10 +51,18 @@ export default function AnalyticsPage() {
 
   if (loading) return <div className="text-muted animate-pulse p-8 text-center uppercase tracking-widest font-bold text-xs mt-12">Loading analytics...</div>;
 
-  const totalSoloSpice = data?.soloPreferences.total || 0;
-  const mildPct = totalSoloSpice > 0 ? ((data?.soloPreferences.mild || 0) / totalSoloSpice) * 100 : 0;
-  const spicyPct = totalSoloSpice > 0 ? ((data?.soloPreferences.spicy || 0) / totalSoloSpice) * 100 : 0;
-  const infernoPct = totalSoloSpice > 0 ? ((data?.soloPreferences.inferno || 0) / totalSoloSpice) * 100 : 0;
+  if (!data || ('error' in data)) {
+    return (
+      <div className="text-rose-400 p-8 text-center uppercase tracking-widest font-bold text-xs mt-12">
+        Failed to load analytics. {(data as any)?.error || 'Unknown error occurred.'}
+      </div>
+    );
+  }
+
+  const totalSoloSpice = data?.soloPreferences?.total || 0;
+  const mildPct = totalSoloSpice > 0 ? ((data?.soloPreferences?.mild || 0) / totalSoloSpice) * 100 : 0;
+  const spicyPct = totalSoloSpice > 0 ? ((data?.soloPreferences?.spicy || 0) / totalSoloSpice) * 100 : 0;
+  const infernoPct = totalSoloSpice > 0 ? ((data?.soloPreferences?.inferno || 0) / totalSoloSpice) * 100 : 0;
 
   return (
     <div className="flex flex-col gap-8 max-w-6xl mx-auto pb-12">
