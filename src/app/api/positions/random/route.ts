@@ -49,7 +49,10 @@ export async function GET(req: Request) {
 
     if (!randomPositions || randomPositions.length === 0) {
       // Fallback: try querying without partySize/spiceLevel filters if no match, keeping hard limits
-      const fallbackQuery = { tags: query.tags };
+      const fallbackQuery: any = {};
+      if (query.tags) {
+        fallbackQuery.tags = query.tags;
+      }
       const fallbackPositions = await Position.aggregate([
         { $match: fallbackQuery },
         { $sample: { size: 1 } },

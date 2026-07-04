@@ -43,6 +43,18 @@ const PositionSchema = new Schema<PositionDocument>(
         index: true,
       },
     ],
+    category: {
+      type: String,
+      enum: ['standard', 'group', 'fetish'],
+      default: 'standard',
+      index: true,
+    },
+    genderConfig: [
+      {
+        type: String,
+        trim: true,
+      }
+    ],
     imageUrl: {
       type: String,
     },

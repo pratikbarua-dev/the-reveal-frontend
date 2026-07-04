@@ -40,6 +40,8 @@ export interface IPosition {
   spiceLevel: 1 | 2 | 3;
   partySize: number;
   tags: string[];
+  category?: 'standard' | 'group' | 'fetish';
+  genderConfig?: string[];
   imageUrl: string;
   sourceUrl: string;
   createdAt: Date;
@@ -92,6 +94,8 @@ export interface PositionCard {
   spiceLevel: 1 | 2 | 3;
   partySize: number;
   tags: string[];
+  category?: 'standard' | 'group' | 'fetish';
+  genderConfig?: string[];
   imageUrl: string;
 }
 

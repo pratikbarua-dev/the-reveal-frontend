@@ -1,6 +1,6 @@
 // ============================================
 // Database Seed Script
-// Reads positions.json and populates MongoDB
+// Reads positions.json and group-positions*.json and populates MongoDB
 // Usage: npm run seed
 // ============================================
 
@@ -12,7 +12,6 @@ import dotenv from 'dotenv';
 // Load env
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 
-// Import models directly (can't use @ alias in scripts)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/the-reveal';
 
 interface RawPosition {
@@ -21,25 +20,42 @@ interface RawPosition {
   url: string;
   description: string;
   image_url: string;
-  local_image: string;
+  local_image?: string;
+  category?: 'standard' | 'group' | 'fetish';
+  partySize?: number;
 }
 
 function extractTitle(headline: string | undefined): string {
   if (typeof headline !== 'string') return 'Intimate Position';
-  // "369. Milk chocolate" → "Milk chocolate"
   const match = headline.match(/^\d+\.\s*(.+)$/);
   return match ? match[1].trim() : headline.trim();
 }
 
 function deriveSpiceLevel(keywords: string[] | undefined): 1 | 2 | 3 {
   const kws = Array.isArray(keywords) ? keywords : [];
-  if (kws.includes('hard') || kws.includes('crazy')) return 3;
+  if (kws.includes('hard') || kws.includes('crazy') || kws.includes('cuckold') || kws.includes('group play')) return 3;
   if (kws.includes('easy')) return 1;
-  return 2; // default medium
+  return 2; 
 }
 
-function generateTemplate(title: string, keywords: string[] | undefined): string {
+function generateTemplate(title: string, keywords: string[] | undefined, partySize: number): string {
   const kws = Array.isArray(keywords) ? keywords : [];
+  
+  if (partySize === 3) {
+    const parts: string[] = [];
+    parts.push(`{Player1}, {Player2}, and {Player3} explore the "${title}" position together.`);
+    if (kws.includes('voyeurism') || kws.includes('cuckold')) {
+        parts.push(`{Player1} watches intently while {Player2} and {Player3} engage deeply.`);
+    } else if (kws.includes('MMF') || kws.includes('MFF')) {
+        parts.push(`{Player2} becomes the center of attention, receiving pleasure from both {Player1} and {Player3}.`);
+    } else {
+        parts.push(`All three partners share the rhythm, moving in sync and finding incredible connections.`);
+    }
+    parts.push(`Communicate openly — whisper what feels incredible to each other.`);
+    return parts.join(' ');
+  }
+
+  // Standard 2-player template
   const isManActive = kws.includes('man active');
   const isWomanActive = kws.includes('woman active');
   const isFaceToFace = kws.includes('face to face');
@@ -53,7 +69,6 @@ function generateTemplate(title: string, keywords: string[] | undefined): string
   const isLyingDown = kws.includes('lying down');
 
   const parts: string[] = [];
-
   parts.push(`{Player1} and {Player2} explore the "${title}" position together.`);
 
   if (isManActive && !isWomanActive) {
@@ -76,7 +91,6 @@ function generateTemplate(title: string, keywords: string[] | undefined): string
   if (isOral) parts.push(`Use your mouth to discover what makes your partner shiver.`);
 
   parts.push(`Communicate openly — whisper what feels incredible.`);
-
   return parts.join(' ');
 }
 
@@ -87,13 +101,14 @@ async function seed() {
   await mongoose.connect(MONGODB_URI);
   console.log('✅ Connected to MongoDB');
 
-  // Define schema inline (avoiding path alias issues)
   const PositionSchema = new mongoose.Schema({
     title: { type: String, required: true, index: true },
     description: { type: String, required: true },
     descriptionTemplate: { type: String, required: true },
     spiceLevel: { type: Number, min: 1, max: 3, required: true },
     partySize: { type: Number, min: 2, default: 2 },
+    category: { type: String, enum: ['standard', 'group', 'fetish'], default: 'standard' },
+    genderConfig: [{ type: String }],
     tags: [{ type: String }],
     imageUrl: { type: String },
     sourceUrl: { type: String },
@@ -101,53 +116,89 @@ async function seed() {
 
   const Position = mongoose.models.Position || mongoose.model('Position', PositionSchema);
 
-  // Read source data
-  const dataPath = path.resolve(__dirname, '../sexpositions/positions.json');
-  if (!fs.existsSync(dataPath)) {
-    console.error(`❌ File not found: ${dataPath}`);
-    process.exit(1);
-  }
+  // Define files to read
+  const files = [
+    { file: '../sexpositions/positions.json', category: 'standard', partySize: 2 },
+    { file: 'sexpositions/group-positions.json', category: 'group', partySize: 3 },
+    { file: 'sexpositions/group-positions-2.json', category: 'group', partySize: 3 },
+    { file: 'sexpositions/group-positions-3.json', category: 'group', partySize: 3 },
+  ];
 
-  const rawData: RawPosition[] = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-  console.log(`📂 Found ${rawData.length} positions in source data`);
+  const positionsToInsert = [];
+
+  for (const item of files) {
+    const dataPath = path.resolve(__dirname, item.file);
+    if (!fs.existsSync(dataPath)) {
+      console.warn(`⚠️ File not found: ${dataPath}, skipping...`);
+      continue;
+    }
+    const rawData: RawPosition[] = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+    console.log(`📂 Found ${rawData.length} positions in ${path.basename(dataPath)}`);
+
+    for (const raw of rawData) {
+      const title = extractTitle(raw.headline);
+      const isGroup = item.partySize === 3;
+      const kws = Array.isArray(raw.keywords) ? raw.keywords : [];
+      
+      let imageUrl = '';
+      if (raw.image_url && raw.image_url.startsWith('/images/')) {
+        imageUrl = raw.image_url;
+      } else if (raw.local_image) {
+        imageUrl = `/images/${path.basename(raw.local_image)}`;
+      }
+
+      let category = item.category;
+      if (kws.includes('cuckold') || kws.includes('voyeurism')) {
+         category = 'fetish';
+      }
+
+      const genderConfig = [];
+      if (kws.includes('MMF')) genderConfig.push('M', 'M', 'F');
+      if (kws.includes('MFF')) genderConfig.push('M', 'F', 'F');
+
+      positionsToInsert.push({
+        title,
+        description: raw.description || '',
+        descriptionTemplate: generateTemplate(title, kws, item.partySize),
+        spiceLevel: deriveSpiceLevel(kws),
+        partySize: item.partySize,
+        category: category,
+        genderConfig: genderConfig,
+        tags: kws,
+        imageUrl: imageUrl,
+        sourceUrl: raw.url || '',
+      });
+    }
+  }
 
   // Clear existing
   const deleted = await Position.deleteMany({});
   console.log(`🗑️ Cleared ${deleted.deletedCount} existing positions`);
 
-  // Transform and insert
-  const positions = rawData.map((raw) => {
-    const title = extractTitle(raw.headline);
-    const imageFile = raw.local_image ? path.basename(raw.local_image) : '';
-
-    return {
-      title,
-      description: raw.description || '',
-      descriptionTemplate: generateTemplate(title, raw.keywords),
-      spiceLevel: deriveSpiceLevel(raw.keywords),
-      partySize: 2,
-      tags: Array.isArray(raw.keywords) ? raw.keywords : [],
-      imageUrl: imageFile ? `/images/${imageFile}` : '',
-      sourceUrl: raw.url || '',
-    };
-  });
-
-  const result = await Position.insertMany(positions);
-  console.log(`✅ Seeded ${result.length} positions`);
+  const result = await Position.insertMany(positionsToInsert);
+  console.log(`✅ Seeded ${result.length} total positions`);
 
   // Stats
-  const spiceCounts = { mild: 0, spicy: 0, inferno: 0 };
-  positions.forEach((p) => {
-    if (p.spiceLevel === 1) spiceCounts.mild++;
-    else if (p.spiceLevel === 2) spiceCounts.spicy++;
-    else spiceCounts.inferno++;
+  const stats = { mild: 0, spicy: 0, inferno: 0, standard: 0, group: 0, fetish: 0 };
+  positionsToInsert.forEach((p) => {
+    if (p.spiceLevel === 1) stats.mild++;
+    else if (p.spiceLevel === 2) stats.spicy++;
+    else stats.inferno++;
+
+    if (p.category === 'standard') stats.standard++;
+    else if (p.category === 'group') stats.group++;
+    else stats.fetish++;
   });
 
   console.log(`
   📊 Seed Summary:
-  ├── Mild (🌶):    ${spiceCounts.mild}
-  ├── Spicy (🌶🌶):  ${spiceCounts.spicy}
-  └── Inferno (🌶🌶🌶): ${spiceCounts.inferno}
+  ├── Mild (🌶):    ${stats.mild}
+  ├── Spicy (🌶🌶):  ${stats.spicy}
+  └── Inferno (🌶🌶🌶): ${stats.inferno}
+  
+  ├── Standard (2P): ${stats.standard}
+  ├── Group (3P+):   ${stats.group}
+  └── Fetish (3P+):  ${stats.fetish}
   `);
 
   await mongoose.disconnect();
