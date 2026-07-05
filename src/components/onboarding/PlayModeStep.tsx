@@ -49,7 +49,7 @@ export default function PlayModeStep({ value, onChange }: PlayModeStepProps) {
               hover={true}
               onClick={() => onChange(opt.mode)}
               className={`p-5 flex items-center gap-4 cursor-pointer select-none transition-all ${
-                isSelected ? 'bg-surface-elevated/40 border-opacity-100' : 'bg-surface-light border-opacity-20'
+                isSelected ? 'glass border border-primary shadow-glow-subtle' : 'glass-light border border-white/5 opacity-80'
               }`}
             >
               <div

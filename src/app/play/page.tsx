@@ -288,7 +288,7 @@ function SoloPlay() {
             onProgressUpdate={setRevealProgress}
           />
         ) : (
-          <div className="w-full max-w-lg aspect-[4/3] bg-surface-light border border-primary/20 rounded-[var(--radius-card)] flex flex-col items-center justify-center text-muted font-sans text-xs gap-3">
+          <div className="w-full max-w-lg aspect-[4/3] glass border border-primary/20 rounded-[var(--radius-card)] flex flex-col items-center justify-center text-muted font-sans text-xs gap-3">
             <BitingLipSpinner className="w-10 h-10" />
             <span className="uppercase tracking-widest font-bold">Drawing card...</span>
           </div>
@@ -544,7 +544,7 @@ function PlayPageContent() {
   if (playMode === null) {
     return (
       <div className="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-6 bg-surface overflow-hidden">
-        <div className="relative z-10 w-full max-w-md bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] shadow-glow-subtle p-6 md:p-8 flex flex-col gap-6">
+        <div className="relative z-10 w-full max-w-md glass border border-primary/20 rounded-[var(--radius-xl)] shadow-glow-subtle p-6 md:p-8 flex flex-col gap-6">
           <PlayModeStep value={null as any} onChange={(mode) => setPlayMode(mode)} />
         </div>
       </div>
@@ -564,7 +564,7 @@ function PlayPageContent() {
     return (
       <div className="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-6 bg-surface overflow-hidden">
         {/* Lobby selector panel */}
-        <div className="relative z-10 w-full max-w-md bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] shadow-glow p-6 md:p-8 flex flex-col gap-6">
+        <div className="relative z-10 w-full max-w-md glass border border-primary/20 rounded-[var(--radius-xl)] shadow-glow p-6 md:p-8 flex flex-col gap-6">
           <button 
             onClick={() => setPlayMode(null)}
             className="absolute top-4 left-4 p-2 text-muted hover:text-contrast transition-colors flex items-center gap-2 text-[10px] uppercase font-bold tracking-widest"
@@ -605,7 +605,7 @@ function PlayPageContent() {
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-surface-elevated" />
               </div>
-              <span className="relative px-3 bg-surface-light text-[9px] font-bold text-muted uppercase tracking-widest">
+              <span className="relative px-3 glass-light text-[9px] font-bold text-muted uppercase tracking-widest">
                 Or
               </span>
             </div>
@@ -669,7 +669,7 @@ function PlayPageContent() {
   if (roomState.status === 'waiting') {
     return (
       <div className="relative min-h-[calc(100vh-8rem)] flex items-center justify-center p-6 bg-surface overflow-hidden">
-        <div className="relative z-10 w-full max-w-md bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] shadow-glow p-6 md:p-8 flex flex-col gap-6 font-sans">
+        <div className="relative z-10 w-full max-w-md glass border border-primary/20 rounded-[var(--radius-xl)] shadow-glow p-6 md:p-8 flex flex-col gap-6 font-sans">
           <div className="text-center">
             <span className="text-[9px] font-bold text-secondary uppercase tracking-[0.2em]">Lobby Code</span>
             <div className="flex flex-col items-center justify-center mt-1.5 gap-4">
@@ -718,7 +718,7 @@ function PlayPageContent() {
         {/* Leave Lobby Confirmation Modal */}
         {leaveModalOpen && (
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5">
+            <div className="w-full max-w-sm glass border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5">
               <h3 className="text-base font-black text-secondary uppercase tracking-wider text-center">
                 Leave Lobby?
               </h3>
@@ -743,7 +743,7 @@ function PlayPageContent() {
         {/* All Players Ready Modal */}
         {allReadyModalOpen && (
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-8 shadow-glow flex flex-col items-center gap-6 animate-in zoom-in-95 fade-in duration-300">
+            <div className="w-full max-w-sm glass border border-primary/20 rounded-[var(--radius-xl)] p-8 shadow-glow flex flex-col items-center gap-6 animate-in zoom-in-95 fade-in duration-300">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-pulse" />
                 <div className="relative p-4 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30">
@@ -785,7 +785,7 @@ function PlayPageContent() {
         {/* Share Invite Link Modal */}
         {shareModalOpen && roomState && (
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5 relative">
+            <div className="w-full max-w-sm glass border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5 relative">
               <h3 className="text-base font-black text-secondary uppercase tracking-wider text-center font-sans">
                 Invite Your Partner
               </h3>
@@ -871,7 +871,7 @@ function PlayPageContent() {
             onProgressUpdate={setRevealProgress}
           />
         ) : (
-          <div className="w-full max-w-lg aspect-[4/3] bg-surface-light border border-primary/20 rounded-[var(--radius-card)] flex flex-col items-center justify-center text-muted font-sans text-xs gap-3">
+          <div className="w-full max-w-lg aspect-[4/3] glass border border-primary/20 rounded-[var(--radius-card)] flex flex-col items-center justify-center text-muted font-sans text-xs gap-3">
             <BitingLipSpinner className="w-10 h-10" />
             <span className="uppercase tracking-widest font-bold">Drawing card...</span>
           </div>
@@ -912,7 +912,7 @@ function PlayPageContent() {
       {/* Leave Session Confirmation Modal */}
       {leaveModalOpen && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5 relative">
+          <div className="w-full max-w-sm glass border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5 relative">
             <h3 className="text-base font-black text-secondary uppercase tracking-wider text-center font-sans">
               Leave Session?
             </h3>
@@ -937,7 +937,7 @@ function PlayPageContent() {
       {/* Share Invite Link Modal */}
       {shareModalOpen && roomState && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-sm bg-surface-light border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5 relative">
+          <div className="w-full max-w-sm glass border border-primary/20 rounded-[var(--radius-xl)] p-6 shadow-glow flex flex-col gap-5 relative">
             <h3 className="text-base font-black text-secondary uppercase tracking-wider text-center font-sans">
               Invite Your Partner
             </h3>

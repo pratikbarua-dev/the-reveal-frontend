@@ -68,7 +68,7 @@ export default function LibraryPage() {
 
       {/* Grid List */}
       {items.length === 0 && !loading ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-10 border border-dashed border-primary/20 rounded-[var(--radius-card)] bg-surface-light/40 font-sans">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-10 border border-dashed border-primary/20 rounded-[var(--radius-card)] glass font-sans">
           <span className="text-sm font-bold uppercase tracking-widest text-secondary mb-1">
             No matches found
           </span>
@@ -106,7 +106,7 @@ export default function LibraryPage() {
             Array.from({ length: 6 }).map((_, idx) => (
               <div
                 key={idx}
-                className="bg-surface-light border border-surface-elevated rounded-[var(--radius-card)] overflow-hidden aspect-[4/5] flex flex-col gap-4 p-4"
+                className="glass border border-white/5 rounded-[var(--radius-card)] overflow-hidden aspect-[4/5] flex flex-col gap-4 p-4"
               >
                 <Skeleton className="w-full aspect-[16/10]" />
                 <Skeleton className="h-6 w-3/4" />

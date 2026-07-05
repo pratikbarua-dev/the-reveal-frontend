@@ -26,10 +26,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={[
             'w-full px-4 py-3 rounded-[var(--radius-card)]',
-            'bg-surface-elevated text-contrast placeholder:text-muted-dark',
-            'border border-surface-elevated/80',
+            'glass-light text-contrast placeholder:text-muted-dark border border-white/10',
             'outline-none transition-all duration-200',
-            'focus:border-primary/50 focus:shadow-[0_0_15px_rgba(136,14,79,0.2)]',
+            'focus:border-primary/50 focus:shadow-[0_0_15px_rgba(255,51,102,0.2)]',
             error ? 'border-danger/50 shadow-[0_0_10px_rgba(239,68,68,0.15)]' : '',
             className,
           ].join(' ')}

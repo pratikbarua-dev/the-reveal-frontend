@@ -10,15 +10,15 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 const glowStyles = {
-  primary: 'border-primary/30 shadow-[0_0_15px_rgba(136,14,79,0.3)]',
-  gold: 'border-secondary/30 shadow-[0_0_15px_rgba(212,175,55,0.3)]',
-  none: 'border-surface-elevated',
+  primary: 'border-primary/30 shadow-[0_0_15px_rgba(255,51,102,0.3)]',
+  gold: 'border-secondary/30 shadow-[0_0_15px_rgba(157,78,221,0.3)]',
+  none: 'border-white/10 shadow-none',
 };
 
 const hoverGlowStyles = {
-  primary: 'hover:shadow-[0_0_30px_rgba(136,14,79,0.5)] hover:border-primary/50',
-  gold: 'hover:shadow-[0_0_30px_rgba(212,175,55,0.5)] hover:border-secondary/50',
-  none: '',
+  primary: 'hover:shadow-[0_0_30px_rgba(255,51,102,0.5)] hover:border-primary/50',
+  gold: 'hover:shadow-[0_0_30px_rgba(157,78,221,0.5)] hover:border-secondary/50',
+  none: 'hover:border-white/20',
 };
 
 export default function Card({
@@ -33,7 +33,7 @@ export default function Card({
       whileHover={hover ? { y: -2 } : undefined}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
       className={[
-        'bg-surface-light rounded-[var(--radius-card)]',
+        'glass rounded-[var(--radius-card)]',
         'border transition-all duration-300',
         glowStyles[glow],
         hover ? hoverGlowStyles[glow] : '',

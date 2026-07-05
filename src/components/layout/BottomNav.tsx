@@ -15,7 +15,7 @@ export default function BottomNav() {
   ];
 
   return (
-    <nav className="glass fixed bottom-0 left-0 right-0 h-16 border-t border-primary/20 flex items-center justify-around z-50 pb-safe">
+    <nav className="glass-nav fixed bottom-6 left-6 right-6 h-16 rounded-[var(--radius-pill)] border border-primary/20 flex items-center justify-around z-50 shadow-glow-subtle">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = pathname === tab.href;

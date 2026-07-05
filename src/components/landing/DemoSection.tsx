@@ -81,7 +81,7 @@ export default function DemoSection() {
     <section id="demo-section" ref={sectionRef} className="relative py-24 md:py-32 px-6 bg-surface overflow-hidden">
       {/* Subtle background glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(136,14,79,0.06)_0%,transparent_70%)] blur-3xl" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(255,51,102,0.15)_0%,transparent_70%)] blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-lg mx-auto flex flex-col items-center gap-10">
@@ -109,7 +109,7 @@ export default function DemoSection() {
           animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
           transition={{ duration: 0.7, delay: 0.2 }}
           ref={containerRef}
-          className="relative w-full aspect-[4/3] bg-surface-light border border-primary/25 rounded-[var(--radius-card)] shadow-glow-intense overflow-hidden select-none"
+          className="relative w-full aspect-[4/3] glass border border-primary/25 rounded-[var(--radius-card)] shadow-glow-intense overflow-hidden select-none"
         >
           {/* Hidden Content — revealed after scratching */}
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-8 text-center z-0">

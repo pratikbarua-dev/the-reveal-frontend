@@ -38,12 +38,12 @@ export default function PositionCard({
     <Card
       glow="primary"
       hover={true}
-      className="flex flex-col h-full bg-surface-light border-primary/20 overflow-hidden font-sans group relative"
+      className="flex flex-col h-full overflow-hidden font-sans group relative"
     >
       {/* Favorite Heart Toggle Button */}
       <button
         onClick={handleFavToggle}
-        className="absolute top-3 right-3 z-10 p-2 rounded-full bg-surface/75 border border-primary/10 backdrop-blur-sm shadow-glow-subtle transition-all duration-300 scale-100 hover:scale-110 active:scale-95 cursor-pointer"
+        className="absolute top-3 right-3 z-10 p-2 rounded-full glass-light border border-primary/10 shadow-glow-subtle transition-all duration-300 scale-100 hover:scale-110 active:scale-95 cursor-pointer"
       >
         <Heart
           className={`w-4 h-4 transition-colors ${

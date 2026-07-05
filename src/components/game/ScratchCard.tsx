@@ -204,10 +204,10 @@ export default function ScratchCard({
   return (
     <div
       ref={containerRef}
-      className="relative w-full max-w-lg mx-auto bg-surface-light border border-primary/25 rounded-[var(--radius-card)] shadow-glow-intense overflow-hidden select-none min-h-[400px]"
+      className="relative w-full max-w-lg mx-auto glass border border-primary/25 rounded-[var(--radius-card)] shadow-glow-intense overflow-hidden select-none min-h-[400px]"
     >
       {/* Revealed Content Layer */}
-      <div className="relative p-6 flex flex-col gap-6 items-center z-0 bg-surface-light w-full">
+      <div className="relative p-6 flex flex-col gap-6 items-center z-0 w-full">
         {/* Top Side: Position sketch print card */}
         <div className="w-full flex items-center justify-center bg-contrast rounded-[var(--radius-card)] border border-primary/10 overflow-hidden relative shadow-inner p-4 select-none min-h-[250px]">
           {imageUrl && !imgError ? (

@@ -26,7 +26,7 @@ export default function PartnerSection() {
   return (
     <section ref={ref} className="relative py-24 md:py-32 px-6 bg-black overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse,rgba(136,14,79,0.06)_0%,transparent_70%)] blur-3xl" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(ellipse,rgba(157,78,221,0.15)_0%,transparent_70%)] blur-3xl" />
       </div>
 
       <div className="relative z-10 max-w-3xl mx-auto flex flex-col items-center gap-14">
@@ -53,10 +53,10 @@ export default function PartnerSection() {
           initial={{ opacity: 0, y: 40, scale: 0.95 }}
           animate={isInView ? { opacity: 1, y: 0, scale: 1 } : {}}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="relative w-full max-w-md aspect-[4/3] bg-surface-light/30 backdrop-blur-sm border border-primary/15 rounded-[var(--radius-xl)] overflow-hidden"
+          className="relative w-full max-w-md aspect-[4/3] glass border border-primary/15 rounded-[var(--radius-xl)] overflow-hidden"
         >
           {/* Shared card visual */}
-          <div className="absolute inset-4 md:inset-6 bg-surface-light border border-primary/10 rounded-[var(--radius-card)] flex items-center justify-center">
+          <div className="absolute inset-4 md:inset-6 glass-light border border-primary/10 rounded-[var(--radius-card)] flex items-center justify-center">
             <div className="flex flex-col items-center gap-3 text-center px-6">
               <div className="text-3xl">🫦</div>
               <span className="text-xs font-black uppercase tracking-widest text-secondary">
@@ -81,7 +81,7 @@ export default function PartnerSection() {
           <motion.div
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay: 1.5 }}
-            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-secondary-light border-2 border-secondary/50 flex items-center justify-center text-[10px] font-black text-surface shadow-glow-gold"
+            className="absolute top-3 right-3 w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-secondary-light border-2 border-secondary/50 flex items-center justify-center text-[10px] font-black text-surface shadow-glow"
           >
             P2
           </motion.div>
