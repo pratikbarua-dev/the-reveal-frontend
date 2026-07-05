@@ -4,6 +4,7 @@ import dbConnect from '@/lib/db';
 import mongoose from 'mongoose';
 import User from '@/models/User';
 import GameSession from '@/models/GameSession';
+import Position from '@/models/Position';
 
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
