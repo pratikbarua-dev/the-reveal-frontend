@@ -184,7 +184,7 @@ export default function AppShell({ children }: AppShellProps) {
     <div className="min-h-screen bg-surface flex flex-col pb-16 font-sans relative">
       <TopNav />
       <main className="flex-1 flex flex-col pt-16 overflow-y-auto">{children}</main>
-      <BottomNav />
+      {!isAdminPage && <BottomNav />}
 
       {/* Global Feedback FAB (Not shown on admin pages, handled by conditional rendering in AppShell already, wait, isAdmin returns early above? No, isAdminPage is handled separately. Wait, isAdminPage returns {children} somewhere else? Ah, if isAdminPage it's handled in its own layout. If it's here, we just render it.) */}
       {!isAdminPage && (
