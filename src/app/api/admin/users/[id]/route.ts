@@ -64,6 +64,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   } catch (error: any) {
     console.error('Error fetching user profile stats:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal Server Error', details: error.message, stack: error.stack }, { status: 500 });
   }
 }
