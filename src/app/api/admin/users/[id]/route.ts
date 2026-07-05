@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import dbConnect from '@/lib/db';
+import mongoose from 'mongoose';
 import User from '@/models/User';
 import GameSession from '@/models/GameSession';
 
@@ -14,7 +15,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     await dbConnect();
     const resolvedParams = await params;
 
-    const user = await User.findById(resolvedParams.id).select('-__v');
+    let user;
+    try {
+      user = await User.findById(resolvedParams.id).select('-__v').lean();
+    } catch (e) {
+      user = null;
+    }
+    
+    // If not found, it might be stored as a raw string instead of an ObjectId in the DB
+    if (!user) {
+      user = await mongoose.connection.collection('users').findOne({ _id: resolvedParams.id });
+    }
+
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
