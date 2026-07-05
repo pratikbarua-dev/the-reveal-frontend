@@ -15,16 +15,33 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     await dbConnect();
     const resolvedParams = await params;
 
+    const rawId = resolvedParams.id;
+    const cleanId = rawId ? rawId.trim() : '';
+
     let user;
     try {
-      user = await User.findById(resolvedParams.id).select('-__v').lean();
+      user = await User.findById(cleanId).select('-__v').lean();
     } catch (e) {
+      console.warn(`User.findById failed for ${cleanId}:`, e);
       user = null;
     }
     
-    // If not found, it might be stored as a raw string instead of an ObjectId in the DB
     if (!user) {
-      user = await mongoose.connection.collection('users').findOne({ _id: resolvedParams.id });
+      try {
+        const objectId = new mongoose.Types.ObjectId(cleanId);
+        user = await mongoose.connection.collection('users').findOne({ _id: objectId });
+      } catch (e) {
+        console.warn(`Manual ObjectId lookup failed for ${cleanId}:`, e);
+      }
+    }
+
+    if (!user) {
+      user = await mongoose.connection.collection('users').findOne({ _id: cleanId });
+    }
+
+    if (!user) {
+      console.error(`User not found for ID: '${cleanId}' (raw: '${rawId}')`);
+      return NextResponse.json({ error: `User not found for ID: ${cleanId}` }, { status: 404 });
     }
 
     if (!user) {
@@ -37,7 +54,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     })
     .sort({ createdAt: -1 })
     .limit(20)
-    .populate('currentPositionId', 'title');
+    .populate('currentPositionId', 'title')
+    .lean();
 
     return NextResponse.json({
       user,
