@@ -6,6 +6,9 @@ import User from '@/models/User';
 import GameSession from '@/models/GameSession';
 import Position from '@/models/Position';
 
+// Prevent tree-shaking of Position model, which is needed by GameSession populate
+if (!Position) console.warn('Position model missing');
+
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
