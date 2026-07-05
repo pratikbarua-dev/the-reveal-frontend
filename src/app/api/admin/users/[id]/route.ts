@@ -36,7 +36,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     }
 
     if (!user) {
-      user = await mongoose.connection.collection('users').findOne({ _id: cleanId });
+      user = await mongoose.connection.collection('users').findOne({ _id: cleanId as any });
     }
 
     if (!user) {
